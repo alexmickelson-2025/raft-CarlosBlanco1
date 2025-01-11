@@ -1,3 +1,5 @@
 # Ignore build output directories
-**/bin/
-**/obj/
+./myclasslib/bin/
+./myclasslib/obj/
+./myxunit/bin/
+./myxunit/obj/
