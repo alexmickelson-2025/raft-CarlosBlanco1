@@ -9,3 +9,4 @@
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/refint/myclasslib.dll
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.pdb
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/ref/myclasslib.dll
+/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.sourcelink.json

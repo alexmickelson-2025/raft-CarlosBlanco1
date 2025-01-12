@@ -99,3 +99,4 @@
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/obj/Debug/net8.0/myxunit.pdb
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/obj/Debug/net8.0/myxunit.genruntimeconfig.cache
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/obj/Debug/net8.0/ref/myxunit.dll
+/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/obj/Debug/net8.0/myxunit.sourcelink.json
