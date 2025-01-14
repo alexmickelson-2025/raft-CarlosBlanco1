@@ -15,6 +15,12 @@ public class UnitTest1
         Assert.True(sn1.State == "Follower");
         Assert.True(sn2.State == "Follower");
     }
+
+    [Fact]
+    public void Test2()
+    {
+        Assert.True(1/2 == 0);
+    }
 }
 
 internal class ServerNode
