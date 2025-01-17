@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "ZH2E3GLEiuqTPWuVMhqZIGXyIEB65ks8LHOwje0RCOuFekiOQbi/vKKGiDh7Voqr/hTCgk7nnD0lSbOyVrflOQ==",
+  "dgSpecHash": "jWaStRKX+lY7wOnGgPPgtszICHdYJmFrWBaal7KTz1Wkp2phH6/AsZryHl0KF+eNRaCb3JR+JO09SSXkDQ8KCg==",
   "success": true,
   "projectFilePath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/myxunit.csproj",
   "expectedPackageFiles": [
     "/Users/carlosfelipeblancocastro/.nuget/packages/castle.core/5.1.1/castle.core.5.1.1.nupkg.sha512",
     "/Users/carlosfelipeblancocastro/.nuget/packages/coverlet.collector/6.0.0/coverlet.collector.6.0.0.nupkg.sha512",
+    "/Users/carlosfelipeblancocastro/.nuget/packages/meziantou.xunit.paralleltestframework/2.3.0/meziantou.xunit.paralleltestframework.2.3.0.nupkg.sha512",
     "/Users/carlosfelipeblancocastro/.nuget/packages/microsoft.codecoverage/17.8.0/microsoft.codecoverage.17.8.0.nupkg.sha512",
     "/Users/carlosfelipeblancocastro/.nuget/packages/microsoft.net.test.sdk/17.8.0/microsoft.net.test.sdk.17.8.0.nupkg.sha512",
     "/Users/carlosfelipeblancocastro/.nuget/packages/microsoft.netcore.platforms/1.1.0/microsoft.netcore.platforms.1.1.0.nupkg.sha512",

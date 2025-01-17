@@ -1,0 +1,38 @@
+﻿@using myclasslib
+@rendermode InteractiveServer
+@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+<button @onclick="startSimulation">AAA</button>
+
+@foreach(var node in nodes)
+{
+    <div style="color:black">@node.NodeId</div>
+}
+
+
+Welcome to your new app.
+
+@code {
+    List<ServerSimulatioNode> nodes = [];
+
+    public void startSimulation()
+    {
+        Console.WriteLine("ran this");
+        var node1 = new ServerNode([]);
+        var node2 = new ServerNode([]);
+        var node3 = new ServerNode([]);
+
+        var simulation1 = new ServerSimulatioNode(node1);
+        var simulation2 = new ServerSimulatioNode(node2);
+        var simulation3 = new ServerSimulatioNode(node3);
+
+        //node1.OtherNodes
+
+        nodes = [simulation1, simulation2, simulation3];
+        StateHasChanged();
+    }
+}

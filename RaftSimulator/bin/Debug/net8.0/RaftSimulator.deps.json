@@ -1,0 +1,36 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "RaftSimulator/1.0.0": {
+        "dependencies": {
+          "myclasslib": "1.0.0"
+        },
+        "runtime": {
+          "RaftSimulator.dll": {}
+        }
+      },
+      "myclasslib/1.0.0": {
+        "runtime": {
+          "myclasslib.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "RaftSimulator/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "myclasslib/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

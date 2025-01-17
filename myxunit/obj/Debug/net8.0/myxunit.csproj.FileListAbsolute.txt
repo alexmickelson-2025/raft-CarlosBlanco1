@@ -105,3 +105,4 @@
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/bin/Debug/net8.0/System.Diagnostics.EventLog.dll
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/bin/Debug/net8.0/runtimes/win/lib/net6.0/System.Diagnostics.EventLog.Messages.dll
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/bin/Debug/net8.0/runtimes/win/lib/net6.0/System.Diagnostics.EventLog.dll
+/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myxunit/bin/Debug/net8.0/Meziantou.Xunit.ParallelTestFramework.dll

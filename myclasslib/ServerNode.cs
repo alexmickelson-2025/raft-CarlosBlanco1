@@ -1,81 +1,155 @@
 ﻿namespace myclasslib;
 
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Timers;
 
 public class ServerNode : IServerNode
 {
-    public long _nodeId {get; set;}
-    public long _leeaderNodeId {get; set;}
-    public ServerState state { get; set; }
-    public int _currentTerm {get; set;}
-    public Timer _electionTimer {get; set;}
-    public Timer _heartbeatTimer {get; set;}
-    public ServerNode()
+    public long NodeId { get; set; }
+    public long LeaderNodeId { get; set; }
+    public ServerState State { get; set; }
+    public int CurrentTerm { get; set; }
+    public Timer ElectionTimer { get; set; }
+    public Timer? HeartbeatTimer { get; set; }
+    public Dictionary<long, IServerNode> IdToNode { get; set; }
+    public Dictionary<long, bool?> IdToVotedForMe { get; set; }
+    public ServerNode(List<IServerNode> neighbors, int startTerm = 0, int electionTimeout = 0)
     {
-        state = ServerState.Follower;
-        _nodeId = DateTime.UtcNow.Ticks;
-        ResetElectionTimer();
+        State = ServerState.Follower;
+        NodeId = DateTime.UtcNow.Ticks;
+        IdToNode = [];
+        IdToNode[NodeId] = this;
+
+        IdToVotedForMe = [];
+        IdToVotedForMe[NodeId] = null;
+
+        CurrentTerm = startTerm;
+
+        foreach (var neighbor in neighbors)
+        {
+            IdToNode.Add(neighbor.NodeId, neighbor);
+            IdToVotedForMe.Add(neighbor.NodeId, null);
+        }
+
+        ElectionTimer = CreateNewElectionTimer(electionTimeout);
+        ElectionTimer.Elapsed += (sender, e) => StartNewElection();
+        ElectionTimer.Start();
     }
 
-    public ServerNode(int startTerm) : this()
+    public Timer CreateNewElectionTimer(double electionTimeout = 0)
     {
-        _currentTerm = startTerm;
-    }
-
-    public void ResetElectionTimer()
-    {
-        Random rand = new Random();
+        Random rand = new();
         double randomValueFrom150To300 = rand.Next(150, 300);
 
-        _electionTimer = new Timer(randomValueFrom150To300);
-        _electionTimer.AutoReset = false;
-        _electionTimer.Elapsed += (sender, e) => StartNewElection();
-        _electionTimer.Start();
+        var Timer = new Timer(electionTimeout == 0 ? randomValueFrom150To300 : electionTimeout)
+        {
+            AutoReset = false
+        };
+
+        return Timer;
     }
 
-    public void AppendEntriesRPC(IServerNode sender)
+    public void AppendEntriesRPC(long senderId, int senderTerm)
     {
-        if(ResponseAppendEntriesRPC(sender.GetCurrentTerm()) == "accepted")
+        if(State == ServerState.Paused) return;
+
+        IServerNode potentialLeader = IdToNode[senderId];
+
+        if (senderTerm >= CurrentTerm)
         {
-            _electionTimer.Stop();
-            _electionTimer.Start();
-            _leeaderNodeId = sender.GetID();
+            ElectionTimer.Stop();
+            ElectionTimer.Start();
+
+            LeaderNodeId = senderId;
+            potentialLeader.ResponseAppendEntriesRPC(NodeId, false);
+        }
+        else
+        {
+            potentialLeader.ResponseAppendEntriesRPC(NodeId, true);
         }
     }
 
-    public string ResponseAppendEntriesRPC(int term)
+    public string ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting)
     {
-        return term < _currentTerm ? "rejected" : "accepted";
+        return "";
     }
 
-    public void RequestVoteRPC()
+    public void StartNewElection()
     {
-        throw new NotImplementedException();
-    }
+        if (IdToNode.Count <= 1)
+        {
+            Console.WriteLine("had no neighbors");
+            return;
+        }
 
-    public void VoteResponseRPC(int serverNodeId, bool wasVoteGiven)
-    {
-        throw new NotImplementedException();
+        CurrentTerm += 1;
+        TransitionToCandidate();
     }
-
-    public void StartNewElection() => _currentTerm += 1;
-    public int GetCurrentTerm() => _currentTerm;
-    public long GetID() => _nodeId;
-    public long GetLeaderId() => _leeaderNodeId;
     public void TransitionToLeader()
     {
-        _electionTimer.Stop();
+        ElectionTimer.Stop();
 
-        state = ServerState.Leader;
+        State = ServerState.Leader;
 
-        _heartbeatTimer = new Timer(50);
-        _heartbeatTimer.AutoReset = false;
-        _heartbeatTimer.Elapsed += (sender, e) => SendAppendEntriesRPC();
-        _heartbeatTimer.Start();
+        HeartbeatTimer = new Timer(20) { AutoReset = false };
 
+        HeartbeatTimer.Elapsed += (sender, e) => SendHeartBeat();
+        HeartbeatTimer.Start();
+    }
+    public void TransitionToCandidate()
+    {
+        State = ServerState.Candidate;
+        ResponseRequestVoteRPC(NodeId, true);
+
+        if (IdToNode.Count > 1)
+        {
+            SendVotes();
+        }
+    }
+    public void SendHeartBeat()
+    {
+        foreach (var idAndNode in IdToNode)
+        {
+            idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm);
+        }
+    }
+    public void SendVotes()
+    {
+        foreach (var idAndNode in IdToNode)
+        {
+            idAndNode.Value.RequestVoteRPC(NodeId, CurrentTerm);
+        }
     }
 
-    public void SendAppendEntriesRPC()
+    public void ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
     {
+        int votesNeededToWinTheElection = (IdToNode.Count / 2) + 1;
+
+        if (IdToVotedForMe.ContainsKey(serverNodeId))
+        {
+            IdToVotedForMe[serverNodeId] = wasVoteGiven;
+            int notesThatveVotedForMe = IdToVotedForMe.Where(x => x.Value == true).Count();
+            if (notesThatveVotedForMe >= votesNeededToWinTheElection) TransitionToLeader();
+        }
+        else
+        {
+            throw new Exception("This serverNode wasn't passed in as a neighbor at initialization");
+        }
+    }
+    public void RequestVoteRPC(long senderId, int senderTerm)
+    {
+        if(State == ServerState.Paused) return;
+
+        IServerNode nodeRequestingVote = IdToNode[senderId];
+
+        nodeRequestingVote.ResponseRequestVoteRPC(NodeId, true);
+    }
+
+    public void TransitionToPaused()
+    {
+        State = ServerState.Paused;
+        ElectionTimer.Stop();
+        if(HeartbeatTimer != null) HeartbeatTimer.Stop();
     }
 }

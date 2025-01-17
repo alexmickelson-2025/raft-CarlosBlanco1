@@ -1,0 +1,41 @@
+{
+  "Files": [
+    {
+      "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/obj/Debug/net8.0/scopedcss/projectbundle/RaftSimulator.bundle.scp.css",
+      "PackagePath": "staticwebassets/RaftSimulator.bundle.scp.css"
+    },
+    {
+      "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/wwwroot/app.css",
+      "PackagePath": "staticwebassets/app.css"
+    },
+    {
+      "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/wwwroot/bootstrap/bootstrap.min.css",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css"
+    },
+    {
+      "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/wwwroot/bootstrap/bootstrap.min.css.map",
+      "PackagePath": "staticwebassets/bootstrap/bootstrap.min.css.map"
+    },
+    {
+      "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/wwwroot/favicon.png",
+      "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.RaftSimulator.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.build.RaftSimulator.props",
+      "PackagePath": "build\\RaftSimulator.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildMultiTargeting.RaftSimulator.props",
+      "PackagePath": "buildMultiTargeting\\RaftSimulator.props"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.buildTransitive.RaftSimulator.props",
+      "PackagePath": "buildTransitive\\RaftSimulator.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
