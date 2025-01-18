@@ -1,7 +1,6 @@
 ﻿namespace myclasslib;
 
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Timers;
 
 public class ServerNode : IServerNode
@@ -10,14 +9,16 @@ public class ServerNode : IServerNode
     public long LeaderNodeId { get; set; }
     public ServerState State { get; set; }
     public int CurrentTerm { get; set; }
-    public Timer ElectionTimer { get; set; }
+    public Timer? ElectionTimer { get; set; }
     public Timer? HeartbeatTimer { get; set; }
     public Dictionary<long, IServerNode> IdToNode { get; set; }
     public Dictionary<long, bool?> IdToVotedForMe { get; set; }
-    public ServerNode(List<IServerNode> neighbors, int startTerm = 0, int electionTimeout = 0)
+    public int numberOfElectionsCalled = 0;
+    public bool wasVoteRequestedForThisTerm = false;
+    public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true, ServerState initialState = ServerState.Follower)
     {
-        State = ServerState.Follower;
         NodeId = DateTime.UtcNow.Ticks;
+
         IdToNode = [];
         IdToNode[NodeId] = this;
 
@@ -26,28 +27,44 @@ public class ServerNode : IServerNode
 
         CurrentTerm = startTerm;
 
-        foreach (var neighbor in neighbors)
+        AddNeighbors(neighbors);
+
+        switch (initialState)
         {
-            IdToNode.Add(neighbor.NodeId, neighbor);
-            IdToVotedForMe.Add(neighbor.NodeId, null);
+            case ServerState.Follower:
+                State = ServerState.Follower;
+                if(startElectionTimer)
+                {
+                    StartNewElectionTimer(electionTimeout);
+                }
+                break;
+            case ServerState.Leader:
+                TransitionToLeader();
+                break;
+            case ServerState.Candidate:
+                TransitionToCandidate();
+                break;
+            case ServerState.Paused:
+                TransitionToPaused();
+                break;
+            default:
+                break;
         }
 
-        ElectionTimer = CreateNewElectionTimer(electionTimeout);
-        ElectionTimer.Elapsed += (sender, e) => StartNewElection();
-        ElectionTimer.Start();
     }
 
-    public Timer CreateNewElectionTimer(double electionTimeout = 0)
+    public void StartNewElectionTimer(double electionTimeout = 0)
     {
         Random rand = new();
         double randomValueFrom150To300 = rand.Next(150, 300);
 
-        var Timer = new Timer(electionTimeout == 0 ? randomValueFrom150To300 : electionTimeout)
+        ElectionTimer = new Timer(electionTimeout == 0 ? randomValueFrom150To300 : electionTimeout)
         {
             AutoReset = false
         };
 
-        return Timer;
+        ElectionTimer.Elapsed += (sender, e) => StartNewElection();
+        ElectionTimer.Start();
     }
 
     public void AppendEntriesRPC(long senderId, int senderTerm)
@@ -56,10 +73,13 @@ public class ServerNode : IServerNode
 
         IServerNode potentialLeader = IdToNode[senderId];
 
+
         if (senderTerm >= CurrentTerm)
         {
-            ElectionTimer.Stop();
-            ElectionTimer.Start();
+            ElectionTimer?.Stop();
+            ElectionTimer?.Start();
+
+            State = ServerState.Follower;
 
             LeaderNodeId = senderId;
             potentialLeader.ResponseAppendEntriesRPC(NodeId, false);
@@ -77,6 +97,8 @@ public class ServerNode : IServerNode
 
     public void StartNewElection()
     {
+        numberOfElectionsCalled += 1;
+
         if (IdToNode.Count <= 1)
         {
             Console.WriteLine("had no neighbors");
@@ -88,19 +110,22 @@ public class ServerNode : IServerNode
     }
     public void TransitionToLeader()
     {
-        ElectionTimer.Stop();
+        ElectionTimer?.Stop();
 
         State = ServerState.Leader;
 
         HeartbeatTimer = new Timer(20) { AutoReset = false };
-
         HeartbeatTimer.Elapsed += (sender, e) => SendHeartBeat();
         HeartbeatTimer.Start();
     }
     public void TransitionToCandidate()
     {
+        ElectionTimer?.Stop();
+
         State = ServerState.Candidate;
-        ResponseRequestVoteRPC(NodeId, true);
+
+        StartNewElectionTimer();
+        IdToVotedForMe[NodeId] = true;
 
         if (IdToNode.Count > 1)
         {
@@ -111,6 +136,7 @@ public class ServerNode : IServerNode
     {
         foreach (var idAndNode in IdToNode)
         {
+            if(idAndNode.Value.NodeId == NodeId) continue;
             idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm);
         }
     }
@@ -118,6 +144,7 @@ public class ServerNode : IServerNode
     {
         foreach (var idAndNode in IdToNode)
         {
+            if(idAndNode.Value.NodeId == NodeId) continue;
             idAndNode.Value.RequestVoteRPC(NodeId, CurrentTerm);
         }
     }
@@ -130,7 +157,11 @@ public class ServerNode : IServerNode
         {
             IdToVotedForMe[serverNodeId] = wasVoteGiven;
             int notesThatveVotedForMe = IdToVotedForMe.Where(x => x.Value == true).Count();
-            if (notesThatveVotedForMe >= votesNeededToWinTheElection) TransitionToLeader();
+
+            if (notesThatveVotedForMe >= votesNeededToWinTheElection)
+            {
+                TransitionToLeader();
+            }
         }
         else
         {
@@ -143,13 +174,31 @@ public class ServerNode : IServerNode
 
         IServerNode nodeRequestingVote = IdToNode[senderId];
 
-        nodeRequestingVote.ResponseRequestVoteRPC(NodeId, true);
+        if(senderTerm < CurrentTerm || wasVoteRequestedForThisTerm) 
+        {
+            nodeRequestingVote.ResponseRequestVoteRPC(NodeId, false);
+        }
+        else
+        {
+            nodeRequestingVote.ResponseRequestVoteRPC(NodeId, true);
+        }
+
+        if(senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
     }
 
     public void TransitionToPaused()
     {
         State = ServerState.Paused;
-        ElectionTimer.Stop();
-        if(HeartbeatTimer != null) HeartbeatTimer.Stop();
+        ElectionTimer?.Stop();
+        HeartbeatTimer?.Stop();
+    }
+
+    public void AddNeighbors(List<IServerNode> neighbors)
+    {
+        foreach (var neighbor in neighbors)
+        {
+            IdToNode.Add(neighbor.NodeId, neighbor);
+            IdToVotedForMe.Add(neighbor.NodeId, null);
+        }
     }
 }

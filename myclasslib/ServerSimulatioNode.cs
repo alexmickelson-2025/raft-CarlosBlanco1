@@ -38,11 +38,6 @@ public class ServerSimulatioNode : IServerNode
         ((IServerNode)_innerServerNode).StartNewElection();
     }
 
-    public System.Timers.Timer CreateNewElectionTimer(int electionTimeout = 0)
-    {
-        return ((IServerNode)_innerServerNode).CreateNewElectionTimer(electionTimeout);
-    }
-
     public void TransitionToLeader()
     {
         ((IServerNode)_innerServerNode).TransitionToLeader();
@@ -68,13 +63,18 @@ public class ServerSimulatioNode : IServerNode
         ((IServerNode)_innerServerNode).ResponseRequestVoteRPC(serverNodeId, wasVoteGiven);
     }
 
-    public System.Timers.Timer CreateNewElectionTimer(double electionTimeout = 0)
-    {
-        return ((IServerNode)_innerServerNode).CreateNewElectionTimer(electionTimeout);
-    }
-
     public void TransitionToPaused()
     {
         ((IServerNode)_innerServerNode).TransitionToPaused();
+    }
+
+    public void StartNewElectionTimer(double electionTimeout = 0)
+    {
+        ((IServerNode)_innerServerNode).StartNewElectionTimer(electionTimeout);
+    }
+
+    public void AddNeighbors(List<IServerNode> neighbors)
+    {
+        ((IServerNode)_innerServerNode).AddNeighbors(neighbors);
     }
 }

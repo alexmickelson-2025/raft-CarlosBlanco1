@@ -5,7 +5,7 @@ public interface IServerNode
     public long LeaderNodeId {get; set;}
     public ServerState State { get; set; }
     public int CurrentTerm {get; set;}
-    public System.Timers.Timer ElectionTimer {get; set;}
+    public System.Timers.Timer? ElectionTimer {get; set;}
     public System.Timers.Timer? HeartbeatTimer {get; set;}
     public Dictionary<long, IServerNode> IdToNode {get; set;}
     public Dictionary<long, bool?> IdToVotedForMe {get; set;}
@@ -16,8 +16,9 @@ public interface IServerNode
     public void SendHeartBeat();
     public void SendVotes();
     public void StartNewElection();
-    public System.Timers.Timer CreateNewElectionTimer(double electionTimeout = 0);
+    public void StartNewElectionTimer(double electionTimeout = 0);
     public void TransitionToLeader();
     public void TransitionToCandidate();
     public void TransitionToPaused();
+    public void AddNeighbors(List<IServerNode> neighbors);
 }

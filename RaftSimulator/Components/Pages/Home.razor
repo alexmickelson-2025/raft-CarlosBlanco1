@@ -8,23 +8,40 @@
 
 <button @onclick="startSimulation">AAA</button>
 
-@foreach(var node in nodes)
-{
-    <div style="color:black">@node.NodeId</div>
+<div class="row">
+  @foreach (var node in nodes)
+  {
+    @* var timeoutRemaining = DateTime.Now - node._innerServerNode.ElectionTimer; *@
+    @* var maxIntervalMilliseconds = 300 * RaftNode.NodeIntervalScalar; *@
+    @* var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds))); *@
+
+    @node.NodeId
+    @node.State
+    @node.ElectionTimer.Interval
+
+    <br>
 }
+</div>
+
 
 
 Welcome to your new app.
 
 @code {
     List<ServerSimulatioNode> nodes = [];
+    Timer? timer;
 
     public void startSimulation()
     {
-        Console.WriteLine("ran this");
         var node1 = new ServerNode([]);
         var node2 = new ServerNode([]);
-        var node3 = new ServerNode([]);
+        var node3 = new ServerNode([node1, node2]);
+
+        node1.IdToNode[node2.NodeId] = node2;
+        node1.IdToNode[node3.NodeId] = node3;
+
+        node2.IdToNode[node1.NodeId] = node1;
+        node2.IdToNode[node3.NodeId] = node3;
 
         var simulation1 = new ServerSimulatioNode(node1);
         var simulation2 = new ServerSimulatioNode(node2);
@@ -33,6 +50,10 @@ Welcome to your new app.
         //node1.OtherNodes
 
         nodes = [simulation1, simulation2, simulation3];
-        StateHasChanged();
+
+        timer = new Timer(_ =>
+        {
+        InvokeAsync(StateHasChanged);
+        }, null, 0, 200);
     }
 }
