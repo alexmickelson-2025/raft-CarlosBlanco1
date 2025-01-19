@@ -36,7 +36,7 @@
         <div class="d-flex flex-column gap-2 border border-black p-3">
             <p>@node.NodeId</p>
             <p>@node.State</p>
-            <p>@node.ElectionTimer.Interval</p>
+            <p>Election Interval (x @node._innerServerNode.timeoutForTimer): @node.ElectionTimer.Interval</p>
             <p>Current Term: @node.CurrentTerm</p>
             <p>Leader is @node.LeaderNodeId</p>
             <div class="progress" role="progressbar" aria-label="Basic example"
@@ -53,21 +53,24 @@
     Timer? timer;
     public void startSimulation()
     {
+        nodes = [];
+        
         var node1 = new ServerNode([]);
-        Thread.Sleep(100);
         var node2 = new ServerNode([]);
-        Thread.Sleep(100);
         var node3 = new ServerNode([]);
-        Thread.Sleep(100);
-
 
         node1.AddNeighbors([node2, node3]);
         node2.AddNeighbors([node1, node3]);
         node3.AddNeighbors([node1, node2]);
 
-        node1.timeoutForTimer = 200;
-        node2.timeoutForTimer = 200;
-        node3.timeoutForTimer = 200;
+        node1.timeoutForTimer = 25;
+        node2.timeoutForTimer = 25;
+        node3.timeoutForTimer = 25;
+
+        node1.StartTheThing();
+        node2.StartTheThing();
+        node3.StartTheThing();
+
 
         var simulation1 = new ServerSimulatioNode(node1);
         var simulation2 = new ServerSimulatioNode(node2);

@@ -30,8 +30,11 @@ public class ServerNode : IServerNode
         CurrentTerm = startTerm;
 
         AddNeighbors(neighbors);
+    }
 
-        StartNewElectionTimer(electionTimeout);
+    public void StartTheThing()
+    {
+        StartNewElectionTimer();
     }
 
     public void StartNewElectionTimer(double electionTimeout = 0)
