@@ -38,6 +38,14 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9XZWF0aGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/Components/Pages/Xd.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9YZC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/Components/Pages/Xd2.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9YZDIucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9Sb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 

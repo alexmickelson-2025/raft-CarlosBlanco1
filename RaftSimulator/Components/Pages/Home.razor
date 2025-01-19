@@ -61,6 +61,10 @@
         node2.AddNeighbors([node1, node3]);
         node3.AddNeighbors([node1, node2]);
 
+        node1.timeoutForTimer = 200;
+        node2.timeoutForTimer = 200;
+        node3.timeoutForTimer = 200;
+
         var simulation1 = new ServerSimulatioNode(node1);
         var simulation2 = new ServerSimulatioNode(node2);
         var simulation3 = new ServerSimulatioNode(node3);

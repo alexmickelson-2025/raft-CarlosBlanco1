@@ -14,13 +14,13 @@ public interface IServerNode
     public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting);
     public Task RequestVoteRPC(long senderId, int senderTerm);
     public Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven);
-    public void SendHeartBeat();
-    public void SendVotes();
+    public Task SendHeartBeat();
+    public Task SendVotes();
     public void StartNewElection();
     public void StartNewElectionTimer(double electionTimeout = 0);
-    public void TransitionToLeader();
-    public void TransitionToCandidate();
-    public void TransitionToPaused();
-    public void TransitionToFollower();
+    public Task TransitionToLeader();
+    public Task TransitionToCandidate();
+    public Task TransitionToPaused();
+    public Task TransitionToFollower();
     public void AddNeighbors(List<IServerNode> neighbors);
 }

@@ -211,13 +211,13 @@ public class UnitTest1
         var follower3 = Substitute.For<IServerNode>();
         follower3.NodeId = 3;
 
-        var futureLeader = new ServerNode([follower1, follower2, follower3], electionTimeout:150, initialState:ServerState.Candidate);
+        var futureLeader = new ServerNode([follower1, follower2, follower3], electionTimeout:150);
 
+        Thread.Sleep(300);
+        
         futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);
         futureLeader.ResponseRequestVoteRPC(follower2.NodeId, true);
         //Node 3 Doesnt respond
-
-        Thread.Sleep(300);
 
         Assert.True(futureLeader.State == ServerState.Leader);
     }

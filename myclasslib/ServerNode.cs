@@ -15,8 +15,8 @@ public class ServerNode : IServerNode
     public DateTime ElectionTimerStartedAt { get; set; }
     public int numberOfElectionsCalled = 0;
     public bool wasVoteRequestedForThisTerm = false;
-    public bool shouldISendHearbeats = false;
-    public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true, ServerState initialState = ServerState.Follower)
+    public double timeoutForTimer = 1;
+    public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true)
     {
         NodeId = DateTime.UtcNow.Ticks;
 
@@ -30,28 +30,7 @@ public class ServerNode : IServerNode
 
         AddNeighbors(neighbors);
 
-        switch (initialState)
-        {
-            case ServerState.Follower:
-                State = ServerState.Follower;
-                if(startElectionTimer)
-                {
-                    StartNewElectionTimer(electionTimeout);
-                }
-                break;
-            case ServerState.Leader:
-                TransitionToLeader();
-                break;
-            case ServerState.Candidate:
-                TransitionToCandidate();
-                break;
-            case ServerState.Paused:
-                TransitionToPaused();
-                break;
-            default:
-                break;
-        }
-
+        StartNewElectionTimer(electionTimeout);
     }
 
     public void StartNewElectionTimer(double electionTimeout = 0)
@@ -59,16 +38,16 @@ public class ServerNode : IServerNode
         Random rand = new();
         double randomValueFrom150To300 = rand.Next(150, 300);
 
-        ElectionTimer = new System.Timers.Timer(electionTimeout == 0 ? randomValueFrom150To300 : electionTimeout)
+        if (ElectionTimer == null)
         {
-            AutoReset = false
-        };
+            ElectionTimer = new System.Timers.Timer();
+        }
+
+        ElectionTimer.Interval = electionTimeout == 0 ? randomValueFrom150To300 * timeoutForTimer: electionTimeout * timeoutForTimer;
+        ElectionTimer.AutoReset = false;
 
         ElectionTimerStartedAt = DateTime.Now;
-        ElectionTimer.Elapsed += (sender, e) => 
-        {
-            StartNewElection();
-        };
+        ElectionTimer.Elapsed += (sender, e) => {StartNewElection();};
         ElectionTimer.Start();
     }
 
@@ -85,6 +64,7 @@ public class ServerNode : IServerNode
 
             State = ServerState.Follower;
             CurrentTerm = senderTerm;
+            wasVoteRequestedForThisTerm = false;
             LeaderNodeId = senderId;
 
             await potentialLeader.ResponseAppendEntriesRPC(NodeId, false);
@@ -100,11 +80,8 @@ public class ServerNode : IServerNode
         }
         else
         {
-            Console.WriteLine($"Outdated term detected at {DateTime.Now}: My term is {CurrentTerm}, theirs is {senderTerm}");
-
             if(senderTerm < CurrentTerm)
             {
-                Console.WriteLine("actually sent");
                 await potentialLeader.ResponseAppendEntriesRPC(NodeId, true);
             }
         }
@@ -115,13 +92,14 @@ public class ServerNode : IServerNode
     {
         if(isResponseRejecting)
         {
+            CurrentTerm = IdToNode[senderId].CurrentTerm;
             TransitionToFollower();
         }
 
         return Task.CompletedTask;
     }
 
-    public void StartNewElection()
+    public async void StartNewElection()
     {
         numberOfElectionsCalled += 1;
 
@@ -132,26 +110,27 @@ public class ServerNode : IServerNode
         }
 
         CurrentTerm += 1;
-        TransitionToCandidate();
+        await TransitionToCandidate();
     }
-    public void TransitionToLeader()
+    public Task TransitionToLeader()
+{
+    ElectionTimer?.Stop();
+
+    State = ServerState.Leader;
+
+    if (HeartbeatTimer == null)
     {
-        ElectionTimer?.Stop();
-
-        State = ServerState.Leader;
-
-        shouldISendHearbeats = true;
-
-        HeartbeatTimer = new System.Timers.Timer(20) { AutoReset = true };
-        HeartbeatTimer.Elapsed += async (sender, e) => 
-        {
-            if(shouldISendHearbeats) SendHeartBeat();
-        };
-        HeartbeatTimer.Start();
-
-        return;
+        HeartbeatTimer = new System.Timers.Timer();
     }
-    public void TransitionToCandidate()
+
+    HeartbeatTimer.Interval = 20 * timeoutForTimer;
+    HeartbeatTimer.AutoReset = true;
+    HeartbeatTimer.Elapsed += async (sender, e) => { if(State == ServerState.Leader) await SendHeartBeat(); };
+    HeartbeatTimer.Start();
+
+    return Task.CompletedTask;
+}
+    public async Task TransitionToCandidate()
     {
         ElectionTimer?.Stop();
 
@@ -162,35 +141,35 @@ public class ServerNode : IServerNode
 
         if (IdToNode.Count > 1)
         {
-            SendVotes();
+            await SendVotes();
         }
 
         return;
     }
-    public async void SendHeartBeat()
+    public async Task SendHeartBeat()
     {
         foreach (var idAndNode in IdToNode)
         {
             if(idAndNode.Value.NodeId == NodeId) continue;
             await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm);
         }
-
-        return;
     }
-    public async void SendVotes()
+    public async Task SendVotes()
     {
         foreach (var idAndNode in IdToNode)
         {
             if(idAndNode.Value.NodeId == NodeId) continue;
             await idAndNode.Value.RequestVoteRPC(NodeId, CurrentTerm);
         }
-
-        return;
     }
 
-    public Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
+    public async Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
     {
-        if(!wasVoteGiven) CurrentTerm = IdToNode[serverNodeId].CurrentTerm;
+        if(!wasVoteGiven)
+        {
+            CurrentTerm = IdToNode[serverNodeId].CurrentTerm;
+            wasVoteRequestedForThisTerm = false;
+        }
 
         int votesNeededToWinTheElection = (IdToNode.Count / 2) + 1;
 
@@ -201,7 +180,7 @@ public class ServerNode : IServerNode
 
             if (notesThatveVotedForMe >= votesNeededToWinTheElection)
             {
-                TransitionToLeader();
+                await TransitionToLeader();
             }
         }
         else
@@ -209,7 +188,7 @@ public class ServerNode : IServerNode
             throw new Exception("This serverNode wasn't passed in as a neighbor at initialization");
         }
 
-        return Task.CompletedTask;
+        return;
     }
     public async Task RequestVoteRPC(long senderId, int senderTerm)
     {
@@ -231,11 +210,13 @@ public class ServerNode : IServerNode
         return;
     }
 
-    public void TransitionToPaused()
+    public Task TransitionToPaused()
     {
         State = ServerState.Paused;
         ElectionTimer?.Stop();
         HeartbeatTimer?.Stop();
+
+        return Task.CompletedTask;
     }
 
     public void AddNeighbors(List<IServerNode> neighbors)
@@ -247,13 +228,14 @@ public class ServerNode : IServerNode
         }
     }
 
-    public void TransitionToFollower()
+    public Task TransitionToFollower()
     {
         State = ServerState.Follower;
-        shouldISendHearbeats = false;
         HeartbeatTimer?.Stop();
         ElectionTimer?.Stop();
 
         StartNewElectionTimer();
+
+        return Task.CompletedTask;
     }
 }

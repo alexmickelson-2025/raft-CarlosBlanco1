@@ -31,36 +31,9 @@ public class ServerSimulatioNode : IServerNode
         return Task.CompletedTask;
     }
 
-
-
-    public void SendHeartBeat()
-    {
-        ((IServerNode)_innerServerNode).SendHeartBeat();
-    }
-
     public void StartNewElection()
     {
         ((IServerNode)_innerServerNode).StartNewElection();
-    }
-
-    public void TransitionToLeader()
-    {
-        ((IServerNode)_innerServerNode).TransitionToLeader();
-    }
-
-    public void SendVotes()
-    {
-        ((IServerNode)_innerServerNode).SendVotes();
-    }
-
-    public void TransitionToCandidate()
-    {
-        ((IServerNode)_innerServerNode).TransitionToCandidate();
-    }
-
-    public void TransitionToPaused()
-    {
-        ((IServerNode)_innerServerNode).TransitionToPaused();
     }
 
     public void StartNewElectionTimer(double electionTimeout = 0)
@@ -103,8 +76,33 @@ public class ServerSimulatioNode : IServerNode
         return Task.CompletedTask;
     }
 
-    public void TransitionToFollower()
+    public Task SendHeartBeat()
     {
-        ((IServerNode)_innerServerNode).TransitionToFollower();
+        return ((IServerNode)_innerServerNode).SendHeartBeat();
+    }
+
+    public Task SendVotes()
+    {
+        return ((IServerNode)_innerServerNode).SendVotes();
+    }
+
+    public Task TransitionToLeader()
+    {
+        return ((IServerNode)_innerServerNode).TransitionToLeader();
+    }
+
+    public Task TransitionToCandidate()
+    {
+        return ((IServerNode)_innerServerNode).TransitionToCandidate();
+    }
+
+    public Task TransitionToPaused()
+    {
+        return ((IServerNode)_innerServerNode).TransitionToPaused();
+    }
+
+    public Task TransitionToFollower()
+    {
+        return ((IServerNode)_innerServerNode).TransitionToFollower();
     }
 }
