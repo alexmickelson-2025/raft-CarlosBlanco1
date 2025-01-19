@@ -117,6 +117,7 @@ public class ServerNode : IServerNode
     ElectionTimer?.Stop();
 
     State = ServerState.Leader;
+    LeaderNodeId = NodeId;
 
     if (HeartbeatTimer == null)
     {
