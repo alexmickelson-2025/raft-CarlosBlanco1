@@ -1,4 +1,5 @@
 ﻿using myclasslib;
+using System.Threading.Tasks;
 using System.Timers;
 
 public class ServerNode : IServerNode
@@ -14,6 +15,7 @@ public class ServerNode : IServerNode
     public DateTime ElectionTimerStartedAt { get; set; }
     public int numberOfElectionsCalled = 0;
     public bool wasVoteRequestedForThisTerm = false;
+    public bool shouldISendHearbeats = false;
     public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true, ServerState initialState = ServerState.Follower)
     {
         NodeId = DateTime.UtcNow.Ticks;
@@ -63,40 +65,56 @@ public class ServerNode : IServerNode
         };
 
         ElectionTimerStartedAt = DateTime.Now;
-        ElectionTimer.Elapsed += (sender, e) => StartNewElection();
+        ElectionTimer.Elapsed += (sender, e) => 
+        {
+            StartNewElection();
+        };
         ElectionTimer.Start();
     }
 
-    public Task AppendEntriesRPC(long senderId, int senderTerm)
+    public async Task AppendEntriesRPC(long senderId, int senderTerm)
     {
-        if(State == ServerState.Paused) return Task.CompletedTask;
+        if (State == ServerState.Paused) return;
 
         IServerNode potentialLeader = IdToNode[senderId];
 
-        if (senderTerm >= CurrentTerm)
+        if (senderTerm > CurrentTerm)
         {
             ElectionTimer?.Stop();
             StartNewElectionTimer();
 
             State = ServerState.Follower;
             CurrentTerm = senderTerm;
-
             LeaderNodeId = senderId;
-            potentialLeader.ResponseAppendEntriesRPC(NodeId, false);
+
+            await potentialLeader.ResponseAppendEntriesRPC(NodeId, false);
+        }
+        else if (senderTerm == CurrentTerm) 
+        {
+            ElectionTimer?.Stop();
+            StartNewElectionTimer();
+
+            State = ServerState.Follower;
+            LeaderNodeId = senderId;
+            await potentialLeader.ResponseAppendEntriesRPC(NodeId, false);
         }
         else
         {
-            potentialLeader.ResponseAppendEntriesRPC(NodeId, true);
-        }
+            Console.WriteLine($"Outdated term detected at {DateTime.Now}: My term is {CurrentTerm}, theirs is {senderTerm}");
 
-        return Task.CompletedTask;
+            if(senderTerm < CurrentTerm)
+            {
+                Console.WriteLine("actually sent");
+                await potentialLeader.ResponseAppendEntriesRPC(NodeId, true);
+            }
+        }
     }
+
 
     public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting)
     {
         if(isResponseRejecting)
         {
-            CurrentTerm = IdToNode[senderId].CurrentTerm;
             TransitionToFollower();
         }
 
@@ -122,9 +140,16 @@ public class ServerNode : IServerNode
 
         State = ServerState.Leader;
 
+        shouldISendHearbeats = true;
+
         HeartbeatTimer = new System.Timers.Timer(20) { AutoReset = true };
-        HeartbeatTimer.Elapsed += (sender, e) => SendHeartBeat();
+        HeartbeatTimer.Elapsed += async (sender, e) => 
+        {
+            if(shouldISendHearbeats) SendHeartBeat();
+        };
         HeartbeatTimer.Start();
+
+        return;
     }
     public void TransitionToCandidate()
     {
@@ -139,22 +164,28 @@ public class ServerNode : IServerNode
         {
             SendVotes();
         }
+
+        return;
     }
-    public void SendHeartBeat()
+    public async void SendHeartBeat()
     {
         foreach (var idAndNode in IdToNode)
         {
             if(idAndNode.Value.NodeId == NodeId) continue;
-            idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm);
+            await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm);
         }
+
+        return;
     }
-    public void SendVotes()
+    public async void SendVotes()
     {
         foreach (var idAndNode in IdToNode)
         {
             if(idAndNode.Value.NodeId == NodeId) continue;
-            idAndNode.Value.RequestVoteRPC(NodeId, CurrentTerm);
+            await idAndNode.Value.RequestVoteRPC(NodeId, CurrentTerm);
         }
+
+        return;
     }
 
     public Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
@@ -180,24 +211,24 @@ public class ServerNode : IServerNode
 
         return Task.CompletedTask;
     }
-    public Task RequestVoteRPC(long senderId, int senderTerm)
+    public async Task RequestVoteRPC(long senderId, int senderTerm)
     {
-        if(State == ServerState.Paused) return Task.CompletedTask;
+        if(State == ServerState.Paused) return;
 
         IServerNode nodeRequestingVote = IdToNode[senderId];
 
         if(senderTerm < CurrentTerm || wasVoteRequestedForThisTerm) 
         {
-            nodeRequestingVote.ResponseRequestVoteRPC(NodeId, false);
+            await nodeRequestingVote.ResponseRequestVoteRPC(NodeId, false);
         }
         else
         {
-            nodeRequestingVote.ResponseRequestVoteRPC(NodeId, true);
+            await nodeRequestingVote.ResponseRequestVoteRPC(NodeId, true);
         }
 
         if(senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
 
-        return Task.CompletedTask;
+        return;
     }
 
     public void TransitionToPaused()
@@ -219,6 +250,7 @@ public class ServerNode : IServerNode
     public void TransitionToFollower()
     {
         State = ServerState.Follower;
+        shouldISendHearbeats = false;
         HeartbeatTimer?.Stop();
         ElectionTimer?.Stop();
 

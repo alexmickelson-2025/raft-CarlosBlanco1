@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using myclasslib;
 using NSubstitute;
 
@@ -254,7 +255,7 @@ public class UnitTest1
     //Test 13
 
     [Fact]
-    public void GivenCandidateReceivesAppendEntriesMessageFromEqualTermThenBecomesFollower()
+    public async Task GivenCandidateReceivesAppendEntriesMessageFromEqualTermThenBecomesFollower()
     {
         var nodeWithEqualTerm = Substitute.For<IServerNode>();
         nodeWithEqualTerm.CurrentTerm = 2;
@@ -263,7 +264,7 @@ public class UnitTest1
 
         Thread.Sleep(300);
 
-        candidate.AppendEntriesRPC(nodeWithEqualTerm.NodeId, nodeWithEqualTerm.CurrentTerm);
+        await candidate.AppendEntriesRPC(nodeWithEqualTerm.NodeId, nodeWithEqualTerm.CurrentTerm);
 
         Console.WriteLine(candidate.State);
         Assert.True(nodeWithEqualTerm.CurrentTerm == candidate.CurrentTerm);
