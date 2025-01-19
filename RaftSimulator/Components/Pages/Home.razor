@@ -54,8 +54,12 @@
     public void startSimulation()
     {
         var node1 = new ServerNode([]);
+        Thread.Sleep(100);
         var node2 = new ServerNode([]);
+        Thread.Sleep(100);
         var node3 = new ServerNode([]);
+        Thread.Sleep(100);
+
 
         node1.AddNeighbors([node2, node3]);
         node2.AddNeighbors([node1, node3]);

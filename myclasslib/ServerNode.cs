@@ -19,6 +19,7 @@ public class ServerNode : IServerNode
     public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true)
     {
         NodeId = DateTime.UtcNow.Ticks;
+        State = ServerState.Follower;
 
         IdToNode = [];
         IdToNode[NodeId] = this;
@@ -49,6 +50,7 @@ public class ServerNode : IServerNode
         ElectionTimerStartedAt = DateTime.Now;
         ElectionTimer.Elapsed += (sender, e) => {StartNewElection();};
         ElectionTimer.Start();
+
     }
 
     public async Task AppendEntriesRPC(long senderId, int senderTerm)
@@ -113,24 +115,24 @@ public class ServerNode : IServerNode
         await TransitionToCandidate();
     }
     public Task TransitionToLeader()
-{
-    ElectionTimer?.Stop();
-
-    State = ServerState.Leader;
-    LeaderNodeId = NodeId;
-
-    if (HeartbeatTimer == null)
     {
-        HeartbeatTimer = new System.Timers.Timer();
+        ElectionTimer?.Stop();
+
+        State = ServerState.Leader;
+        LeaderNodeId = NodeId;
+
+        if (HeartbeatTimer == null)
+        {
+            HeartbeatTimer = new System.Timers.Timer();
+        }
+
+        HeartbeatTimer.Interval = 20 * timeoutForTimer;
+        HeartbeatTimer.AutoReset = true;
+        HeartbeatTimer.Elapsed += async (sender, e) => { if(State == ServerState.Leader) await SendHeartBeat(); };
+        HeartbeatTimer.Start();
+
+        return Task.CompletedTask;
     }
-
-    HeartbeatTimer.Interval = 20 * timeoutForTimer;
-    HeartbeatTimer.AutoReset = true;
-    HeartbeatTimer.Elapsed += async (sender, e) => { if(State == ServerState.Leader) await SendHeartBeat(); };
-    HeartbeatTimer.Start();
-
-    return Task.CompletedTask;
-}
     public async Task TransitionToCandidate()
     {
         ElectionTimer?.Stop();
