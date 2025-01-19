@@ -1,6 +1,4 @@
-﻿namespace myclasslib;
-
-using System.Collections.Generic;
+﻿using myclasslib;
 using System.Timers;
 
 public class ServerNode : IServerNode
@@ -9,10 +7,11 @@ public class ServerNode : IServerNode
     public long LeaderNodeId { get; set; }
     public ServerState State { get; set; }
     public int CurrentTerm { get; set; }
-    public Timer? ElectionTimer { get; set; }
-    public Timer? HeartbeatTimer { get; set; }
+    public System.Timers.Timer? ElectionTimer { get; set; }
+    public System.Timers.Timer? HeartbeatTimer { get; set; }
     public Dictionary<long, IServerNode> IdToNode { get; set; }
     public Dictionary<long, bool?> IdToVotedForMe { get; set; }
+    public DateTime ElectionTimerStartedAt { get; set; }
     public int numberOfElectionsCalled = 0;
     public bool wasVoteRequestedForThisTerm = false;
     public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true, ServerState initialState = ServerState.Follower)
@@ -58,28 +57,29 @@ public class ServerNode : IServerNode
         Random rand = new();
         double randomValueFrom150To300 = rand.Next(150, 300);
 
-        ElectionTimer = new Timer(electionTimeout == 0 ? randomValueFrom150To300 : electionTimeout)
+        ElectionTimer = new System.Timers.Timer(electionTimeout == 0 ? randomValueFrom150To300 : electionTimeout)
         {
             AutoReset = false
         };
 
+        ElectionTimerStartedAt = DateTime.Now;
         ElectionTimer.Elapsed += (sender, e) => StartNewElection();
         ElectionTimer.Start();
     }
 
-    public void AppendEntriesRPC(long senderId, int senderTerm)
+    public Task AppendEntriesRPC(long senderId, int senderTerm)
     {
-        if(State == ServerState.Paused) return;
+        if(State == ServerState.Paused) return Task.CompletedTask;
 
         IServerNode potentialLeader = IdToNode[senderId];
-
 
         if (senderTerm >= CurrentTerm)
         {
             ElectionTimer?.Stop();
-            ElectionTimer?.Start();
+            StartNewElectionTimer();
 
             State = ServerState.Follower;
+            CurrentTerm = senderTerm;
 
             LeaderNodeId = senderId;
             potentialLeader.ResponseAppendEntriesRPC(NodeId, false);
@@ -88,11 +88,19 @@ public class ServerNode : IServerNode
         {
             potentialLeader.ResponseAppendEntriesRPC(NodeId, true);
         }
+
+        return Task.CompletedTask;
     }
 
-    public string ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting)
+    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting)
     {
-        return "";
+        if(isResponseRejecting)
+        {
+            CurrentTerm = IdToNode[senderId].CurrentTerm;
+            TransitionToFollower();
+        }
+
+        return Task.CompletedTask;
     }
 
     public void StartNewElection()
@@ -114,7 +122,7 @@ public class ServerNode : IServerNode
 
         State = ServerState.Leader;
 
-        HeartbeatTimer = new Timer(20) { AutoReset = false };
+        HeartbeatTimer = new System.Timers.Timer(20) { AutoReset = true };
         HeartbeatTimer.Elapsed += (sender, e) => SendHeartBeat();
         HeartbeatTimer.Start();
     }
@@ -149,8 +157,10 @@ public class ServerNode : IServerNode
         }
     }
 
-    public void ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
+    public Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
     {
+        if(!wasVoteGiven) CurrentTerm = IdToNode[serverNodeId].CurrentTerm;
+
         int votesNeededToWinTheElection = (IdToNode.Count / 2) + 1;
 
         if (IdToVotedForMe.ContainsKey(serverNodeId))
@@ -167,10 +177,12 @@ public class ServerNode : IServerNode
         {
             throw new Exception("This serverNode wasn't passed in as a neighbor at initialization");
         }
+
+        return Task.CompletedTask;
     }
-    public void RequestVoteRPC(long senderId, int senderTerm)
+    public Task RequestVoteRPC(long senderId, int senderTerm)
     {
-        if(State == ServerState.Paused) return;
+        if(State == ServerState.Paused) return Task.CompletedTask;
 
         IServerNode nodeRequestingVote = IdToNode[senderId];
 
@@ -184,6 +196,8 @@ public class ServerNode : IServerNode
         }
 
         if(senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
+
+        return Task.CompletedTask;
     }
 
     public void TransitionToPaused()
@@ -200,5 +214,14 @@ public class ServerNode : IServerNode
             IdToNode.Add(neighbor.NodeId, neighbor);
             IdToVotedForMe.Add(neighbor.NodeId, null);
         }
+    }
+
+    public void TransitionToFollower()
+    {
+        State = ServerState.Follower;
+        HeartbeatTimer?.Stop();
+        ElectionTimer?.Stop();
+
+        StartNewElectionTimer();
     }
 }

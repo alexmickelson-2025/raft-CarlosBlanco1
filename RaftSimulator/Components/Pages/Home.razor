@@ -6,54 +6,83 @@
 
 <h1>Hello, world!</h1>
 
-<button @onclick="startSimulation">AAA</button>
+<button class="mb-3" @onclick="startSimulation">Start New Simulation</button>
 
-<div class="row">
-  @foreach (var node in nodes)
-  {
-    @* var timeoutRemaining = DateTime.Now - node._innerServerNode.ElectionTimer; *@
-    @* var maxIntervalMilliseconds = 300 * RaftNode.NodeIntervalScalar; *@
-    @* var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds))); *@
-
-    @node.NodeId
-    @node.State
-    @node.ElectionTimer.Interval
-
-    <br>
-}
+<div>
+    <div>
+        <label for="speed">
+            Election timeout between @(FormatMilliSeconds(150 * ServerSimulatioNode.IntervalScaleValue)) and
+            @(FormatMilliSeconds(300 * ServerSimulatioNode.IntervalScaleValue)) seconds
+            <br>
+            <input type="range" id="speed" name="speed" min="1" max="150" @bind:event="oninput"
+                @bind=ServerSimulatioNode.IntervalScaleValue @onchange=UpdateTimer />
+        </label>
+    </div>
+    <label for="NetworkRequestDelay">
+        Network Delay @FormatMilliSeconds(ServerSimulatioNode.NetworkRequestDelay) seconds
+        <br>
+        <input type="range" id="NetworkRequestDelay" name="NetworkRequestDelay" min="10" max="10000"
+            @bind:event="oninput" @bind=ServerSimulatioNode.NetworkRequestDelay />
+    </label>
 </div>
 
+<div class="d-flex gap-5">
+    @foreach (var node in nodes)
+    {
+        var timeoutRemaining = DateTime.Now - node._innerServerNode.ElectionTimerStartedAt;
+        var maxIntervalMilliseconds = 300 * ServerSimulatioNode.IntervalScaleValue;
+        var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds) / maxIntervalMilliseconds));
 
-
-Welcome to your new app.
+        <div class="d-flex flex-column gap-2 border border-black p-3">
+            <p>@node.NodeId</p>
+            <p>@node.State</p>
+            <p>@node.ElectionTimer.Interval</p>
+            <p>@node.CurrentTerm</p>
+            <p>Leader is @node.LeaderNodeId</p>
+            <div class="progress" role="progressbar" aria-label="Basic example"
+                aria-valuenow=@(Math.Abs(timeoutRemaining.TotalMilliseconds)) aria-valuemin="0"
+                aria-valuemax="@(maxIntervalMilliseconds)">
+                <div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;">@percentageRemaining</div>
+            </div>
+        </div>
+    }
+</div>
 
 @code {
-    List<ServerSimulatioNode> nodes = [];
+    private List<ServerSimulatioNode> nodes = [];
     Timer? timer;
-
     public void startSimulation()
     {
         var node1 = new ServerNode([]);
         var node2 = new ServerNode([]);
-        var node3 = new ServerNode([node1, node2]);
+        var node3 = new ServerNode([]);
 
-        node1.IdToNode[node2.NodeId] = node2;
-        node1.IdToNode[node3.NodeId] = node3;
-
-        node2.IdToNode[node1.NodeId] = node1;
-        node2.IdToNode[node3.NodeId] = node3;
+        node1.AddNeighbors([node2, node3]);
+        node2.AddNeighbors([node1, node3]);
+        node3.AddNeighbors([node1, node2]);
 
         var simulation1 = new ServerSimulatioNode(node1);
         var simulation2 = new ServerSimulatioNode(node2);
         var simulation3 = new ServerSimulatioNode(node3);
 
-        //node1.OtherNodes
-
         nodes = [simulation1, simulation2, simulation3];
 
         timer = new Timer(_ =>
         {
-        InvokeAsync(StateHasChanged);
+            InvokeAsync(StateHasChanged);
         }, null, 0, 200);
+    }
+
+    public static string FormatMilliSeconds(double milliSeconds)
+    {
+        return $"{milliSeconds / 1000.0:F1}";
+    }
+    public void UpdateTimer()
+    {
+        timer?.Dispose();
+        timer = new Timer(_ =>
+        {
+            InvokeAsync(StateHasChanged);
+        }, null, 0, 100 * (int)ServerSimulatioNode.IntervalScaleValue);
     }
 }
