@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using myclasslib;
 using NSubstitute;
 
@@ -23,7 +22,7 @@ public class UnitTest1
         ServerNode follower = new ServerNode([leader], 1);
         leader.CurrentTerm = 1;
 
-        follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
+        _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
 
         leader.Received().ResponseAppendEntriesRPC(follower.NodeId, Arg.Any<bool>());
     }
@@ -36,7 +35,7 @@ public class UnitTest1
         ServerNode follower = new ServerNode([leader], 2);
         leader.CurrentTerm = 1;
 
-        follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
+        _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
 
         leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:true);
     }
@@ -52,7 +51,7 @@ public class UnitTest1
         follower.StartTheThing();
         Thread.Sleep(300);
 
-        follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
+        _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
 
         leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:false);
     }
@@ -131,7 +130,7 @@ public class UnitTest1
         leader.CurrentTerm = leaderTerm;
         var follower = new ServerNode([leader], startTerm: followerTerm);
 
-        follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
+        _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
 
         Assert.True(follower.LeaderNodeId == leader.NodeId);
     }
@@ -164,7 +163,7 @@ public class UnitTest1
     {
         var futureCandidate = new ServerNode([]);
 
-        futureCandidate.TransitionToCandidate();
+        _ = futureCandidate.TransitionToCandidate();
 
         Assert.True(futureCandidate.IdToVotedForMe[futureCandidate.NodeId] == true);
     }
@@ -178,7 +177,7 @@ public class UnitTest1
 
         var futureLeader = new ServerNode([follower1], electionTimeout:150);
 
-        follower1.When(f => f.RequestVoteRPC(Arg.Any<long>(), Arg.Any<int>())).Do(_ =>{futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);});
+        follower1.When(f => f.RequestVoteRPC(Arg.Any<long>(), Arg.Any<int>())).Do(async _ => await  futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true) );
 
         futureLeader.StartTheThing();
         Thread.Sleep(300);
@@ -200,9 +199,9 @@ public class UnitTest1
 
         futureLeader.StartTheThing();
 
-        futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);
-        futureLeader.ResponseRequestVoteRPC(follower2.NodeId, true);
-        futureLeader.ResponseRequestVoteRPC(follower3.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower2.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower3.NodeId, true);
 
         Thread.Sleep(300);
         Assert.True(futureLeader.State == ServerState.Leader);
@@ -224,8 +223,8 @@ public class UnitTest1
         futureLeader.StartTheThing();
         Thread.Sleep(300);
 
-        futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);
-        futureLeader.ResponseRequestVoteRPC(follower2.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower2.NodeId, true);
         //Node 3 Doesnt respond
 
         Assert.True(futureLeader.State == ServerState.Leader);
@@ -241,7 +240,7 @@ public class UnitTest1
 
         var follower = new ServerNode([candidate], startTerm: 1);
 
-        follower.RequestVoteRPC(candidate.NodeId, candidate.CurrentTerm);
+        _ = follower.RequestVoteRPC(candidate.NodeId, candidate.CurrentTerm);
 
         candidate.Received().ResponseRequestVoteRPC(follower.NodeId, wasVoteGiven:true); 
     }
@@ -296,9 +295,9 @@ public class UnitTest1
 
         futureLeader.StartTheThing();
 
-        futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);
-        futureLeader.ResponseRequestVoteRPC(follower2.NodeId, true);
-        futureLeader.ResponseRequestVoteRPC(follower3.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower1.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower2.NodeId, true);
+        _ = futureLeader.ResponseRequestVoteRPC(follower3.NodeId, true);
 
         Thread.Sleep(300);
 
@@ -317,8 +316,8 @@ public class UnitTest1
         ServerNode follower = new ServerNode([leader], 1);
         leader.CurrentTerm = 2;
 
-        follower.RequestVoteRPC(leader.NodeId, leader.CurrentTerm);
-        follower.RequestVoteRPC(leader.NodeId, leader.CurrentTerm);
+        _ = follower.RequestVoteRPC(leader.NodeId, leader.CurrentTerm);
+        _ = follower.RequestVoteRPC(leader.NodeId, leader.CurrentTerm);
 
         leader.Received(2).ResponseRequestVoteRPC(follower.NodeId, true);
     }
@@ -358,8 +357,8 @@ public class UnitTest1
 
         ServerNode voter = new ServerNode([candidate1, candidate2], startTerm: 3);
 
-        voter.RequestVoteRPC(candidate1.NodeId, candidate1.CurrentTerm);
-        voter.RequestVoteRPC(candidate2.NodeId, candidate2.CurrentTerm);
+        _ = voter.RequestVoteRPC(candidate1.NodeId, candidate1.CurrentTerm);
+        _ = voter.RequestVoteRPC(candidate2.NodeId, candidate2.CurrentTerm);
 
         candidate1.Received().ResponseRequestVoteRPC(voter.NodeId, true);
         candidate2.Received().ResponseRequestVoteRPC(voter.NodeId, false);

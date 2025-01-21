@@ -1,10 +1,11 @@
 ## Log Replication Test Scenarios
-1. Given a client makes a request to the leader
-When the leader receives the request 
-Then the leader should append the command inside the request to its log
 
-2. Given the leader has appended a command to its log
-When its done
+1. Given a leader has appended an entry to its log and replicated to majority of servers
+When the leader goes to commit it, but breaks down
+Then the new leader should not overwrite the old uncommited entry
+
+2. Given the leader has appended a new entry to its log
+When the operation has been completed
 Then it should send AppendEntriesRPCs with the new entry in parallel to the other nodes
 
 3. Given the leader has sent an AppendEntriesRPC with a new log entry to the other nodes
@@ -25,19 +26,19 @@ Then the highest index commited should be included in the AppendEntriesRPC
 
 7. Given that the leader has sent an AppendEntriesRPC to the other nodes
 When a node realizes that a new log entry has been commited
-It should save that log entry
+Then it should save that log entry in its log
 
-8. Given a leader sent an AppendEntriesRPC with the index and the term
+8. Given a leader sent an AppendEntriesRPC with the index and the term of the new log entry
 When a follower doesn't find a an entry in its log with the same index and term
 Then the follower should refuse any new entries and return failure
 
-9. Given a leader sent an AppendEntriesRPC with the index and the term
+9. Given a leader sent an AppendEntriesRPC with the index and the term of the new log entry
 When a follower does find a an entry in its log with the same index and term
-Then the follower should return sucess
+Then the follower should return success
 
 10. Given a leader has been created
 When it's being initialized
-Then it should initialize all the nextIndex values to the index just after the one in its log
+Then it should initialize all the nextIndex values to the index immediately following the last entry in its log
 
 11. Given the leader sent an AppendEntriesRPC with the index and the term
 When a follower detects an inconsistency and returns failure
@@ -46,6 +47,26 @@ Then the leader should decrement it's nextIndex value and retry the AppendEntrie
 12. Given a candidate sends RequestVoteRPCs (including information about its log) to all other nodes,
 When a node determines that its own log is more up-to-date than the candidate's,
 Then it should respond with a RespondVoteRequestRPC rejecting the vote request.
+
+## Considerations:
+
+1. Ensure all data mutations (e.g., logs, indices, terms) are thread-safe.  
+
+2. Persist critical state (e.g., logs, current term) to disk before responding to RPCs and to maintain consistency after restarts  (Maybe)
+
+3. Validate log consistency before appending entries to avoid corruption.  
+
+4. Ensure `AppendEntriesRPC` retries stop only after the follower responds or the leader steps down.  
+
+5. Gracefully handle network partitions and ensure majority consensus before committing entries.  
+
+6. Save committed entries to disk as soon as they are replicated on a majority of nodes.  (Maybe)
+
+7. Prevent split-brain by ensure only one leader exists in a given term.  
+
+8. Protect against race conditions during leader initialization and election.  
+
+9. Handle unresponsive nodes without delaying progress on the majority of responsive nodes.  
 
 ## Actual Scenarios:
 

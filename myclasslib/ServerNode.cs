@@ -13,6 +13,7 @@ public class ServerNode : IServerNode
     public Dictionary<long, IServerNode> IdToNode { get; set; }
     public Dictionary<long, bool?> IdToVotedForMe { get; set; }
     public DateTime ElectionTimerStartedAt { get; set; }
+    public int NextIndex { get; set; }
     public int numberOfElectionsCalled = 0;
     public bool wasVoteRequestedForThisTerm = false;
     public double timeoutForTimer = 1;
