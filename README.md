@@ -1,3 +1,52 @@
+## Log Replication Test Scenarios
+1. Given a client makes a request to the leader
+When the leader receives the request 
+Then the leader should append the command inside the request to its log
+
+2. Given the leader has appended a command to its log
+When its done
+Then it should send AppendEntriesRPCs with the new entry in parallel to the other nodes
+
+3. Given the leader has sent an AppendEntriesRPC with a new log entry to the other nodes
+When the node it has sent it to is unresponsive
+Then the leader should be sending ApeendEntriesRPC indefenetely
+
+4. Given the leader has sent an AppendEntriesRPC with a new log entry
+When the entry has been replicated on a majority of the severs
+Then the leader should commit it (I'm not sure what is meant by commit)
+
+5. Given the leader has committed a log entry,
+When the operation is complete,
+Then the leader should update its highest index commited
+
+6. Given the leader has updated its highest index commited
+When it goes to send a heartbeat to the other nodes
+Then the highest index commited should be included in the AppendEntriesRPC
+
+7. Given that the leader has sent an AppendEntriesRPC to the other nodes
+When a node realizes that a new log entry has been commited
+It should save that log entry
+
+8. Given a leader sent an AppendEntriesRPC with the index and the term
+When a follower doesn't find a an entry in its log with the same index and term
+Then the follower should refuse any new entries and return failure
+
+9. Given a leader sent an AppendEntriesRPC with the index and the term
+When a follower does find a an entry in its log with the same index and term
+Then the follower should return sucess
+
+10. Given a leader has been created
+When it's being initialized
+Then it should initialize all the nextIndex values to the index just after the one in its log
+
+11. Given the leader sent an AppendEntriesRPC with the index and the term
+When a follower detects an inconsistency and returns failure
+Then the leader should decrement it's nextIndex value and retry the AppendEntriesRPC
+
+12. Given a candidate sends RequestVoteRPCs (including information about its log) to all other nodes,
+When a node determines that its own log is more up-to-date than the candidate's,
+Then it should respond with a RespondVoteRequestRPC rejecting the vote request.
+
 ## Actual Scenarios:
 
 1.(DONE) When a leader is active it sends a heart beat within 50ms.  
@@ -20,29 +69,29 @@
 
 7.(DONE) When a follower does get an AppendEntries message, it resets the election timer. (i.e. it doesn't start an election even after more than 300ms)  
 
-8.Given an election begins, when the candidate gets a majority of votes, it becomes a leader. (think of the easy case; can use two tests for single and multi-node clusters)  
+8.(DONE) Given an election begins, when the candidate gets a majority of votes, it becomes a leader. (think of the easy case; can use two tests for single and multi-node clusters)  
 
-9.Given a candidate receives a majority of votes while waiting for unresponsive node, it still becomes a leader.  
+9. (DONE) Given a candidate receives a majority of votes while waiting for unresponsive node, it still becomes a leader.  
 
-10.A follower that has not voted and is in an earlier term responds to a RequestForVoteRPC with yes. (the reply will be a separate RPC) 
+10. (DONE) A follower that has not voted and is in an earlier term responds to a RequestForVoteRPC with yes. (the reply will be a separate RPC) 
 
-11.Given a candidate server that just became a candidate, it votes for itself.  
+11. (DONE) Given a candidate server that just became a candidate, it votes for itself.  
 
-12.Given a candidate, when it receives an AppendEntries message from a node with a later term, then candidate loses and becomes a follower. 
+12.(DONE) Given a candidate, when it receives an AppendEntries message from a node with a later term, then candidate loses and becomes a follower. 
 
-13.Given a candidate, when it receives an AppendEntries message from a node with an equal term, then candidate loses and becomes a follower.
+13. (DONE) Given a candidate, when it receives an AppendEntries message from a node with an equal term, then candidate loses and becomes a follower.
 
-14.If a node receives a second request for vote for the same term, it should respond no. (again, separate RPC for response)  
+14. (DONE) If a node receives a second request for vote for the same term, it should respond no. (again, separate RPC for response)  
 
-15.If a node receives a second request for vote for a future term, it should vote for that node.  
+15. (DONE) If a node receives a second request for vote for a future term, it should vote for that node.  
 
-16.Given a candidate, when an election timer expires inside of an election, a new election is started.  
+16. (DONE) Given a candidate, when an election timer expires inside of an election, a new election is started.  
 
 17.(DONE)  When a follower node receives an AppendEntries request, it sends a response.  
 
 18.(DONE) Given a candidate receives an AppendEntries from a previous term, then rejects.  
 
-19.When a candidate wins an election, it immediately sends a heart beat.  
+19. (DONE) When a candidate wins an election, it immediately sends a heart beat.  
 
 20.(Testing persistence to disk will be a later assignment.)  
 
