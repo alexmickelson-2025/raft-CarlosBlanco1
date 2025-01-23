@@ -16,21 +16,13 @@ public class ServerSimulatioNode : IServerNode
     public Dictionary<long, IServerNode> IdToNode { get => ((IServerNode)_innerServerNode).IdToNode; set => ((IServerNode)_innerServerNode).IdToNode = value; }
     public Dictionary<long, bool?> IdToVotedForMe { get => ((IServerNode)_innerServerNode).IdToVotedForMe; set => ((IServerNode)_innerServerNode).IdToVotedForMe = value; }
     public DateTime ElectionTimerStartedAt { get => ((IServerNode)_innerServerNode).ElectionTimerStartedAt; set => ((IServerNode)_innerServerNode).ElectionTimerStartedAt = value; }
+    public int CommitIndex { get => ((IServerNode)_innerServerNode).CommitIndex; set => ((IServerNode)_innerServerNode).CommitIndex = value; }
+    public Dictionary<long, int> IdToNextIndex { get => ((IServerNode)_innerServerNode).IdToNextIndex; set => ((IServerNode)_innerServerNode).IdToNextIndex = value; }
+
     public ServerSimulatioNode(ServerNode innerServerNode)
     {
         _innerServerNode = innerServerNode;
     }
-
-    public Task AppendEntriesRPC(long senderId, int senderTerm)
-    {
-        Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
-        {
-            await ((IServerNode)_innerServerNode).AppendEntriesRPC(senderId, senderTerm);
-        });
-
-        return Task.CompletedTask;
-    }
-
     public void StartNewElection()
     {
         ((IServerNode)_innerServerNode).StartNewElection();
@@ -46,11 +38,11 @@ public class ServerSimulatioNode : IServerNode
         ((IServerNode)_innerServerNode).AddNeighbors(neighbors);
     }
 
-    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting)
+    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex)
     {
         Task.Delay(NetworkResponseDelay).ContinueWith(async (_previousTask) =>
         {
-            await ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting); ;
+            await ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting, senderTerm, commitIndex); ;
         });
 
         return Task.CompletedTask;
@@ -104,5 +96,15 @@ public class ServerSimulatioNode : IServerNode
     public Task TransitionToFollower()
     {
         return ((IServerNode)_innerServerNode).TransitionToFollower();
+    }
+
+    public void SendCommandToLeader(LogEntry entry)
+    {
+        ((IServerNode)_innerServerNode).SendCommandToLeader(entry);
+    }
+
+    public Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry, int? highestCommitedIndex)
+    {
+        return ((IServerNode)_innerServerNode).AppendEntriesRPC(senderId, senderTerm, entry, highestCommitedIndex);
     }
 }

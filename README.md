@@ -1,3 +1,32 @@
+## ACTUAL LOG REPLICATION SCENARIOS
+
+1. (DONE) When a leader receives a client command, the leader sends the log entry in the next AppendEntries RPC to all nodes.  
+2. (DONE) When a leader receives a command from the client, it is appended to its log.  
+3. (DONE) When a node is new, its log is empty.  
+4. (DONE) When a leader wins an election, it initializes the nextIndex for each follower to the index just after the last one in its log.  
+5. (DONE) Leaders maintain a "nextIndex" for each follower that is the index of the next log entry the leader will send to that follower.  
+6. (DONE) The highest committed index from the leader is included in AppendEntries RPCs.  
+7. When a follower learns that a log entry is committed, it applies the entry to its local state machine.  
+8. When the leader has received a majority confirmation of a log, it commits it.  
+9. The leader commits logs by incrementing its committed log index.  
+10. (DONE) Given a follower receives an AppendEntries with logs, it will add those entries to its personal log.  
+11. (DONE) A follower's response to an AppendEntries includes the follower's term number and log entry index.  
+12. When a leader receives majority responses from the clients after a log replication heartbeat, the leader sends a confirmation response to the client.  
+13. Given a leader node, when a log is committed, it applies it to its internal state machine.  
+14. when a follower receives a valid heartbeat, it increases its commitIndex to match the commit index of the heartbeat
+    1. reject the heartbeat if the previous log index / term number does not match your log 
+15. When sending an AppendEntries RPC, the leader includes the index and term of the entry in its log that immediately precedes the new entries.  
+    1. If the follower does not find an entry in its log with the same index and term, then it refuses the new entries.  
+        1. Term must be the same or newer.  
+        2. If the index is greater, it will be decreased by the leader.  
+        3. If the index is less, the follower deletes what it has.  
+    2. If a follower rejects the AppendEntries RPC, the leader decrements nextIndex and retries the AppendEntries RPC.  
+16. (DONE) When a leader sends a heartbeat with a log but does not receive responses from a majority of nodes, the entry is uncommitted.  
+17. (DONE) If a leader does not receive a response from a follower, the leader continues to send the log entries in subsequent heartbeats.  
+18. If a leader cannot commit an entry, it does not send a response to the client.  
+19. If a node receives an AppendEntries with logs that are too far in the future from its local state, it should reject the AppendEntries.  
+20. If a node receives an AppendEntries with a term and index that do not match, it will reject the AppendEntries until it finds a matching log.  
+
 ## Log Replication Test Scenarios
 
 1. Given a leader has appended an entry to its log and replicated to majority of servers

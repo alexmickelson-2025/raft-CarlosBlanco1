@@ -24,7 +24,7 @@ public class UnitTest1
 
         _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
 
-        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, Arg.Any<bool>());
+        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, Arg.Any<bool>(), follower.CurrentTerm, follower.CommitIndex);
     }
 
     //Test 18
@@ -37,7 +37,7 @@ public class UnitTest1
 
         _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
 
-        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:true);
+        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:true, follower.CurrentTerm, follower.CommitIndex);
     }
 
     //Test 7
@@ -53,7 +53,7 @@ public class UnitTest1
 
         _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
 
-        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:false);
+        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:false, follower.CurrentTerm, follower.CommitIndex);
     }
 
     //Test 4 
@@ -152,9 +152,9 @@ public class UnitTest1
         // leader.StartTheThing();
         Thread.Sleep(50);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
-        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
-        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
     }
 
     //Test 11
@@ -255,7 +255,7 @@ public class UnitTest1
 
         var candidate = new ServerNode([nodeWithHigherTerm], startTerm: 1);
 
-        nodeWithHigherTerm.AppendEntriesRPC(nodeWithHigherTerm.NodeId, nodeWithHigherTerm.CurrentTerm);
+        nodeWithHigherTerm.AppendEntriesRPC(nodeWithHigherTerm.NodeId, nodeWithHigherTerm.CurrentTerm, null, null);
 
         Assert.True(candidate.State == ServerState.Follower);
     }
@@ -302,9 +302,9 @@ public class UnitTest1
         Thread.Sleep(300);
 
         Assert.True(futureLeader.State == ServerState.Leader);
-        follower1.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm);
-        follower2.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm);
-        follower3.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm);
+        follower1.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, futureLeader.CommitIndex);
+        follower2.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, futureLeader.CommitIndex);
+        follower3.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, futureLeader.CommitIndex);
     }
 
     //Test 15
