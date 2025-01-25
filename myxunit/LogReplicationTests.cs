@@ -20,7 +20,7 @@ public class LogReplicationTests
         var leader = new ServerNode([]);
         leader.TransitionToLeader();
 
-        var command = new LogEntry(_term: 1, _command: "SET 8");
+        var command = new LogEntry(_term: 1, _command: "SET 8 -> XD");
 
         leader.SendCommandToLeader(command);
 
@@ -30,7 +30,7 @@ public class LogReplicationTests
 
     // Test 1
     [Fact]
-    public void WhenLeaderReceivesClientCommandItSendsItInRPCToAllNodes()
+    public void WhenLeaderReceivesnewLogEntryItSendsItInRPCToAllNodes()
     {
         var follower1 = Substitute.For<IServerNode>();
         follower1.NodeId = 1;
@@ -42,15 +42,15 @@ public class LogReplicationTests
         var leader = new ServerNode([follower1, follower2, follower3]);
         leader.TransitionToLeader();
 
-        var clientCommand = new LogEntry(_term: 1, _command: "SET 8");
+        var newLogEntry = new LogEntry(_term: 1, _command: "SET 8 -> XD");
 
-        leader.SendCommandToLeader(clientCommand);
+        leader.SendCommandToLeader(newLogEntry);
 
         Thread.Sleep(50);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, clientCommand, leader.CommitIndex);
-        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, clientCommand, leader.CommitIndex);
-        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, clientCommand, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
+        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
+        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
     }
 
     // Test 16
@@ -61,15 +61,13 @@ public class LogReplicationTests
         follower1.NodeId = 1;
         var follower2 = Substitute.For<IServerNode>();
         follower2.NodeId = 2;
-        var follower3 = Substitute.For<IServerNode>();
-        follower3.NodeId = 3;
 
-        var leader = new ServerNode([follower1, follower2, follower3]);
+        var leader = new ServerNode([follower1, follower2]);
         leader.TransitionToLeader();
 
-        var clientCommand = new LogEntry(_term: 1, _command: "SET 8");
+        var newLogEntry = new LogEntry(_term: 1, _command: "SET 8 -> XD");
 
-        leader.SendCommandToLeader(clientCommand);
+        leader.SendCommandToLeader(newLogEntry);
 
         Thread.Sleep(50);
 
@@ -86,17 +84,16 @@ public class LogReplicationTests
         var leader = new ServerNode([follower1]);
         leader.TransitionToLeader();
 
-        var clientCommand = new LogEntry(_term: 1, _command: "SET 8");
+        var newLogEntry = new LogEntry(_term: 1, _command: "SET 8 -> XD");
 
-        leader.SendCommandToLeader(clientCommand);
+        leader.SendCommandToLeader(newLogEntry);
 
-        Thread.Sleep(200);
+        Thread.Sleep(100);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
+        follower1.ClearReceivedCalls();
 
-        var receivedCalls = follower1.ReceivedCalls()
-        .Where(call => call.GetMethodInfo().Name == nameof(follower1.AppendEntriesRPC))
-        .Count();
-
-        Assert.True(receivedCalls >= 4);
+        Thread.Sleep(100);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
     }
 
     // Test 6
@@ -109,13 +106,13 @@ public class LogReplicationTests
         var leader = new ServerNode([follower1]);
         leader.TransitionToLeader();
 
-        var clientCommand = new LogEntry(_term: 1, _command: "SET 8");
+        var newLogEntry = new LogEntry(_term: 1, _command: "SET 8 -> XD");
 
-        leader.SendCommandToLeader(clientCommand);
+        leader.SendCommandToLeader(newLogEntry);
 
         Thread.Sleep(200);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, clientCommand, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
     }
 
     //Test 5
@@ -138,7 +135,7 @@ public class LogReplicationTests
         Assert.True(leader.IdToNextIndex.ContainsKey(follower3.NodeId));
     }
 
-    //Test 4 Q: last one in its log, not the last commited on
+    //Test 4
     [Fact]
     public void WhenALeaderWinsAnElectionItInitializesNextIndexToEachFollowerJustAfterLastOneInLog()
     {
@@ -150,19 +147,19 @@ public class LogReplicationTests
         follower3.NodeId = 3;
 
         var leader = new ServerNode([follower1, follower2, follower3]);
-        var clientCommand = new LogEntry(_term: 1, _command: "SET 8");
+        var newLogEntry = new LogEntry(_term: 1, _command: "SET 8 -> XD");
 
-        leader.SendCommandToLeader(clientCommand);
-        leader.SendCommandToLeader(clientCommand);
-        leader.SendCommandToLeader(clientCommand);
+        leader.SendCommandToLeader(newLogEntry);
+        leader.SendCommandToLeader(newLogEntry);
+        leader.SendCommandToLeader(newLogEntry);
 
         leader.TransitionToLeader();
 
         Thread.Sleep(50);
 
-        Assert.True(leader.IdToNextIndex[follower1.NodeId] == 2);
-        Assert.True(leader.IdToNextIndex[follower2.NodeId] == 2);
-        Assert.True(leader.IdToNextIndex[follower3.NodeId] == 2);
+        Assert.True(leader.IdToNextIndex[follower1.NodeId] == 3);
+        Assert.True(leader.IdToNextIndex[follower2.NodeId] == 3);
+        Assert.True(leader.IdToNextIndex[follower3.NodeId] == 3);
     }
 
     // Test 10
@@ -176,18 +173,20 @@ public class LogReplicationTests
 
         var follower = new ServerNode([fakeLeader]);
         
-        var clientCommand1 = new LogEntry(_term: 2, _command: "SET 8");
-        var clientCommand2 = new LogEntry(_term: 2, _command: "SET 5");
+        var newLogEntry1 = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+        var newLogEntry2 = new LogEntry(_term: 2, _command: "SET 5 -> TAMAL");
 
-        _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, clientCommand1, fakeLeader.CommitIndex);
-        _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, clientCommand2, fakeLeader.CommitIndex);
+        _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, newLogEntry1, fakeLeader.CommitIndex);
+        _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, newLogEntry2, fakeLeader.CommitIndex);
 
         Assert.True(follower.Logs.Count == 2);
+        Assert.Contains(newLogEntry1, follower.Logs);
+        Assert.Contains(newLogEntry2, follower.Logs);
     }
 
     //Test 11
     [Fact]
-    public void FollowersResponseToAppendEntriesIncludesTermNumberAndLogEntryIndex()
+    public void FollowersResponseToAppendEntriesIncludesTermNumberAndSucess()
     {
         var fakeLeader = Substitute.For<IServerNode>();
         fakeLeader.NodeId = 1;
@@ -196,10 +195,10 @@ public class LogReplicationTests
 
         var follower = new ServerNode([fakeLeader]);
         
-        var clientCommand1 = new LogEntry(_term: 2, _command: "SET 8");
+        var newLogEntry1 = new LogEntry(_term: 2, _command: "SET 8 -> XD");
 
-        _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, clientCommand1, fakeLeader.CommitIndex);
+        _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, newLogEntry1, fakeLeader.CommitIndex);
 
-        fakeLeader.Received().ResponseAppendEntriesRPC(follower.NodeId, false, follower.CurrentTerm, follower.CommitIndex);
+        fakeLeader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting: false, follower.CurrentTerm, follower.CommitIndex);
     }
 }

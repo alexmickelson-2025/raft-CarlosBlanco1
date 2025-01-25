@@ -102,18 +102,20 @@ public class ServerNode : IServerNode
             {
                 await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex);
             }
+            else
+            {
+                return;
+            }
         }
     }
 
-    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm = 0, int? commitIndex = 0)
+    public async Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm = 0, int? commitIndex = 0)
     {
         if(isResponseRejecting)
         {
             CurrentTerm = IdToNode[senderId].CurrentTerm;
-            TransitionToFollower();
+            await TransitionToFollower();
         }
-
-        return Task.CompletedTask;
     }
 
     public async void StartNewElection()
@@ -122,7 +124,6 @@ public class ServerNode : IServerNode
 
         if (IdToNode.Count <= 1)
         {
-            Console.WriteLine("had no neighbors");
             return;
         }
 
@@ -133,7 +134,7 @@ public class ServerNode : IServerNode
     {
         foreach (var idAndNode in IdToNode)
         {
-            IdToNextIndex[idAndNode.Key] = Logs.Count == 0? 0 : Logs.Count - 1; 
+            IdToNextIndex[idAndNode.Key] = Logs.Count == 0? 0 : Logs.Count; 
         }
 
         ElectionTimer?.Stop();

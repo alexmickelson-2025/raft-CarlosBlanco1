@@ -10,7 +10,7 @@
 8. When the leader has received a majority confirmation of a log, it commits it.  
 9. The leader commits logs by incrementing its committed log index.  
 10. (DONE) Given a follower receives an AppendEntries with logs, it will add those entries to its personal log.  
-11. (DONE) A follower's response to an AppendEntries includes the follower's term number and log entry index.  
+11. (DONE) A follower's response to an AppendEntries includes the follower's term number and if it was sucessfulOrNot
 12. When a leader receives majority responses from the clients after a log replication heartbeat, the leader sends a confirmation response to the client.  
 13. Given a leader node, when a log is committed, it applies it to its internal state machine.  
 14. when a follower receives a valid heartbeat, it increases its commitIndex to match the commit index of the heartbeat

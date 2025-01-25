@@ -38,16 +38,6 @@ public class ServerSimulatioNode : IServerNode
         ((IServerNode)_innerServerNode).AddNeighbors(neighbors);
     }
 
-    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex)
-    {
-        Task.Delay(NetworkResponseDelay).ContinueWith(async (_previousTask) =>
-        {
-            await ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting, senderTerm, commitIndex); ;
-        });
-
-        return Task.CompletedTask;
-    }
-
     public Task RequestVoteRPC(long senderId, int senderTerm)
     {
         Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
@@ -106,5 +96,10 @@ public class ServerSimulatioNode : IServerNode
     public Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry, int? highestCommitedIndex)
     {
         return ((IServerNode)_innerServerNode).AppendEntriesRPC(senderId, senderTerm, entry, highestCommitedIndex);
+    }
+
+    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex)
+    {
+        return ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting, senderTerm, commitIndex);
     }
 }
