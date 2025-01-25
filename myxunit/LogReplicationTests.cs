@@ -20,11 +20,11 @@ public class LogReplicationTests
         var leader = new ServerNode([]);
         leader.TransitionToLeader();
 
-        var command = new LogEntry(_term: 1, _command: "SET 8 -> XD");
+        var newLogEntry = new LogEntry(_term: 1, _command: "SET 8 -> XD");
 
-        leader.SendCommandToLeader(command);
+        leader.SendCommandToLeader(newLogEntry);
 
-        Assert.Contains(command, leader.Logs);
+        Assert.Contains(newLogEntry, leader.Logs);
         Assert.True(leader.Logs.Count == 1);
     }
 
