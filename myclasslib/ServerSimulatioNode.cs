@@ -18,6 +18,7 @@ public class ServerSimulatioNode : IServerNode
     public DateTime ElectionTimerStartedAt { get => ((IServerNode)_innerServerNode).ElectionTimerStartedAt; set => ((IServerNode)_innerServerNode).ElectionTimerStartedAt = value; }
     public int CommitIndex { get => ((IServerNode)_innerServerNode).CommitIndex; set => ((IServerNode)_innerServerNode).CommitIndex = value; }
     public Dictionary<long, int> IdToNextIndex { get => ((IServerNode)_innerServerNode).IdToNextIndex; set => ((IServerNode)_innerServerNode).IdToNextIndex = value; }
+    public Dictionary<long, bool?> IdToLogValidationStatus { get => ((IServerNode)_innerServerNode).IdToLogValidationStatus; set => ((IServerNode)_innerServerNode).IdToLogValidationStatus = value; }
 
     public ServerSimulatioNode(ServerNode innerServerNode)
     {
@@ -101,5 +102,10 @@ public class ServerSimulatioNode : IServerNode
     public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex)
     {
         return ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting, senderTerm, commitIndex);
+    }
+
+    public void SendConfirmationResponseToClient()
+    {
+        ((IServerNode)_innerServerNode).SendConfirmationResponseToClient();
     }
 }

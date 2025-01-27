@@ -12,6 +12,7 @@ public interface IServerNode
     public Dictionary<long, IServerNode> IdToNode {get; set;}
     public Dictionary<long, bool?> IdToVotedForMe {get; set;}
     public Dictionary<long, int> IdToNextIndex {get; set;}
+    public Dictionary<long, bool?> IdToLogValidationStatus {get; set;}
     public Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry, int? highestCommitedIndex);
     public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex);
     public Task RequestVoteRPC(long senderId, int senderTerm);
@@ -26,4 +27,5 @@ public interface IServerNode
     public Task TransitionToFollower();
     public void AddNeighbors(List<IServerNode> neighbors);
     public void SendCommandToLeader(LogEntry entry);
+    public void SendConfirmationResponseToClient();
 }

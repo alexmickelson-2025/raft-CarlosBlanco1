@@ -17,8 +17,11 @@ public class ServerNode : IServerNode
     public List<LogEntry> Logs {get; set;}
     public int CommitIndex { get; set;}
     public Dictionary<long, int> IdToNextIndex { get; set;}
+    public Dictionary<long, bool?> IdToLogValidationStatus { get; set; }
+
     public int numberOfElectionsCalled = 0;
     public bool wasVoteRequestedForThisTerm = false;
+    public bool wasResponseToClientSent = false;
     public double timeoutForTimer = 1;
     public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true)
     {
@@ -31,6 +34,9 @@ public class ServerNode : IServerNode
 
         IdToVotedForMe = [];
         IdToVotedForMe[NodeId] = null;
+
+        IdToLogValidationStatus = [];
+        IdToLogValidationStatus[NodeId] = null;
                 
         IdToNextIndex = [];
 
@@ -115,6 +121,29 @@ public class ServerNode : IServerNode
         {
             CurrentTerm = IdToNode[senderId].CurrentTerm;
             await TransitionToFollower();
+        }
+        else
+        {
+            int majorityNum = (IdToNode.Count / 2) + 1;
+
+            if (IdToVotedForMe.ContainsKey(senderId))
+            {
+                //so if it didnt reject, it means its valid
+                IdToLogValidationStatus[senderId] = !isResponseRejecting;
+                int nodesThatValidated = IdToLogValidationStatus.Where(x => x.Value == true).Count();
+
+                if (nodesThatValidated >= majorityNum)
+                {
+                    CommitIndex++;
+                    SendConfirmationResponseToClient();
+                }
+            }
+            else
+            {
+                throw new Exception("This serverNode wasn't passed in as a neighbor at initialization");
+            }
+
+            return;
         }
     }
 
@@ -268,5 +297,11 @@ public class ServerNode : IServerNode
     public void SendCommandToLeader(LogEntry entry)
     {
         Logs.Add(entry);
+        IdToLogValidationStatus[NodeId] = true;
+    }
+
+    public void SendConfirmationResponseToClient()
+    {
+        wasResponseToClientSent = true;
     }
 }

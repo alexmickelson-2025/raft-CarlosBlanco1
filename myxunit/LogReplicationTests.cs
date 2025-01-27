@@ -201,4 +201,92 @@ public class LogReplicationTests
 
         fakeLeader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting: false, follower.CurrentTerm, follower.CommitIndex);
     }
+
+    //Test 9 
+    [Fact]
+
+    public void LeaderCommitsLogByIncrementingItsLogIndex()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+        follower1.NodeId = 1;
+
+        var follower2 = Substitute.For<IServerNode>();
+        follower2.NodeId = 2;
+
+        var leader = new ServerNode([follower1, follower2]);
+        leader.TransitionToLeader();
+
+        var initialCommitIndex = leader.CommitIndex;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        leader.SendCommandToLeader(newLogEntry);
+
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
+
+        Thread.Sleep(50);
+
+        Assert.True(initialCommitIndex < leader.CommitIndex);
+    }
+
+    //Test 8 Q: How is this one different from test 9, aren't we just checking that the commit index increased in both of them?
+
+    //Test 12
+    [Fact]
+
+    public void LeaderSendsConfirmationResponseToClientAfterCommit()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+        follower1.NodeId = 1;
+
+        var follower2 = Substitute.For<IServerNode>();
+        follower2.NodeId = 2;
+
+        var leader = new ServerNode([follower1, follower2]);
+        leader.TransitionToLeader();
+
+        var initialCommitIndex = leader.CommitIndex;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        leader.SendCommandToLeader(newLogEntry);
+
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
+
+        Thread.Sleep(50);
+
+        Assert.True(initialCommitIndex < leader.CommitIndex);
+        Assert.True(leader.wasResponseToClientSent == true);
+    }
+
+    //Test 18
+    [Fact]
+    public void IfLeaderCanotCommitItDoesntSendResponse()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+        follower1.NodeId = 1;
+
+        var follower2 = Substitute.For<IServerNode>();
+        follower2.NodeId = 2;
+
+        var leader = new ServerNode([follower1, follower2]);
+        leader.TransitionToLeader();
+
+        var initialCommitIndex = leader.CommitIndex;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        leader.SendCommandToLeader(newLogEntry);
+
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: true, follower1.CurrentTerm, follower1.CommitIndex));
+
+        Thread.Sleep(50);
+
+        Assert.True(leader.wasResponseToClientSent == false);
+    }
+
+    //Test 19 Q: What exactly does too far in the future mean, like how far away from its current term
 }

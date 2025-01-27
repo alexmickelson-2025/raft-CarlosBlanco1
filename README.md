@@ -8,10 +8,10 @@
 6. (DONE) The highest committed index from the leader is included in AppendEntries RPCs.  
 7. When a follower learns that a log entry is committed, it applies the entry to its local state machine.  
 8. When the leader has received a majority confirmation of a log, it commits it.  
-9. The leader commits logs by incrementing its committed log index.  
+9. (DONE) The leader commits logs by incrementing its committed log index.  
 10. (DONE) Given a follower receives an AppendEntries with logs, it will add those entries to its personal log.  
 11. (DONE) A follower's response to an AppendEntries includes the follower's term number and if it was sucessfulOrNot
-12. When a leader receives majority responses from the clients after a log replication heartbeat, the leader sends a confirmation response to the client.  
+12. (DONE) When a leader receives majority responses from the clients after a log replication heartbeat, the leader sends a confirmation response to the client.  
 13. Given a leader node, when a log is committed, it applies it to its internal state machine.  
 14. when a follower receives a valid heartbeat, it increases its commitIndex to match the commit index of the heartbeat
     1. reject the heartbeat if the previous log index / term number does not match your log 
@@ -23,7 +23,7 @@
     2. If a follower rejects the AppendEntries RPC, the leader decrements nextIndex and retries the AppendEntries RPC.  
 16. (DONE) When a leader sends a heartbeat with a log but does not receive responses from a majority of nodes, the entry is uncommitted.  
 17. (DONE) If a leader does not receive a response from a follower, the leader continues to send the log entries in subsequent heartbeats.  
-18. If a leader cannot commit an entry, it does not send a response to the client.  
+18. (DONE) If a leader cannot commit an entry, it does not send a response to the client.  
 19. If a node receives an AppendEntries with logs that are too far in the future from its local state, it should reject the AppendEntries.  
 20. If a node receives an AppendEntries with a term and index that do not match, it will reject the AppendEntries until it finds a matching log.  
 
