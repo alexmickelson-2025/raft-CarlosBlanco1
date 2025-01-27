@@ -151,8 +151,11 @@ public class ServerNode : IServerNode
     {
         numberOfElectionsCalled += 1;
 
+        await TransitionToCandidate();
+
         if (IdToNode.Count <= 1)
         {
+            State = ServerState.Candidate;
             return;
         }
 

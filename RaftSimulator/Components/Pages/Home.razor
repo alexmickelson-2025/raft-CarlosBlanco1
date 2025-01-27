@@ -34,6 +34,14 @@
         var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds) / maxIntervalMilliseconds));
 
         <div class="d-flex flex-column gap-2 border border-black p-3">
+            
+            @if(node.isPaused == false) {
+                <button type="button" class="btn btn-danger" @onclick="async () => await node.TransitionToPaused()">PAUSE</button>
+            }
+            else{
+                <button type="button" class="btn btn-danger" @onclick="async () => await node.TransitionToFollower()">UNPAUSE</button>
+            }
+
             <p>@node.NodeId</p>
             <p>@node.State</p>
             <p>Election Interval (x @node._innerServerNode.timeoutForTimer): @node.ElectionTimer.Interval</p>

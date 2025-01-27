@@ -19,6 +19,7 @@ public class ServerSimulatioNode : IServerNode
     public int CommitIndex { get => ((IServerNode)_innerServerNode).CommitIndex; set => ((IServerNode)_innerServerNode).CommitIndex = value; }
     public Dictionary<long, int> IdToNextIndex { get => ((IServerNode)_innerServerNode).IdToNextIndex; set => ((IServerNode)_innerServerNode).IdToNextIndex = value; }
     public Dictionary<long, bool?> IdToLogValidationStatus { get => ((IServerNode)_innerServerNode).IdToLogValidationStatus; set => ((IServerNode)_innerServerNode).IdToLogValidationStatus = value; }
+    public bool isPaused {get; set;} = false;
 
     public ServerSimulatioNode(ServerNode innerServerNode)
     {
@@ -71,21 +72,25 @@ public class ServerSimulatioNode : IServerNode
 
     public Task TransitionToLeader()
     {
+        isPaused = false;
         return ((IServerNode)_innerServerNode).TransitionToLeader();
     }
 
     public Task TransitionToCandidate()
     {
+    isPaused = false;
         return ((IServerNode)_innerServerNode).TransitionToCandidate();
     }
 
     public Task TransitionToPaused()
     {
+        isPaused = true;
         return ((IServerNode)_innerServerNode).TransitionToPaused();
     }
 
     public Task TransitionToFollower()
     {
+        isPaused = false;
         return ((IServerNode)_innerServerNode).TransitionToFollower();
     }
 

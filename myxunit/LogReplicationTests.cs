@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using myclasslib;
 using NSubstitute;
 
@@ -289,4 +290,83 @@ public class LogReplicationTests
     }
 
     //Test 19 Q: What exactly does too far in the future mean, like how far away from its current term
+
+    [Fact]
+
+    public void WhenLeaderGetsPausedOtherNodesDontGetHeartbeatfor400ms()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+
+        var leader = new ServerNode([follower1]);
+
+        leader.TransitionToLeader();
+
+        Thread.Sleep(50);
+
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        leader.TransitionToPaused();
+
+        follower1.ClearReceivedCalls();
+
+        Thread.Sleep(400);
+
+        follower1.DidNotReceive().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+    }
+
+    [Fact]
+    public void WhenNodeIsLeaderThenTheyPauseThenNoEntriesThenUnpauseAndHeartbeatContinues()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+
+        var leader = new ServerNode([follower1]);
+
+        leader.TransitionToLeader();
+
+        Thread.Sleep(50);
+
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        leader.TransitionToPaused();
+
+        follower1.ClearReceivedCalls();
+
+        Thread.Sleep(400);
+
+        follower1.DidNotReceive().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        leader.TransitionToLeader();
+
+        follower1.ClearReceivedCalls();
+
+        Thread.Sleep(50);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+    }
+
+    [Fact]
+    public void WhenFollowerGetsPausedItDoesntTimeout()
+    {
+        var follower = new ServerNode([]);
+
+        follower.TransitionToPaused();
+
+        Thread.Sleep(300);
+
+        Assert.False(follower.State == ServerState.Candidate);
+    }
+
+    [Fact]
+    public async Task WhenFollowerGetsUnpausedItBecomesCandidate()
+    {
+        var follower = new ServerNode([]);
+
+        await follower.TransitionToPaused();
+
+        Thread.Sleep(300);
+
+        Assert.False(follower.State == ServerState.Candidate);
+        await follower.TransitionToFollower();
+
+        Thread.Sleep(800);
+        Console.WriteLine(follower.State);
+
+        Assert.True(follower.State == ServerState.Candidate);
+    }
 }
