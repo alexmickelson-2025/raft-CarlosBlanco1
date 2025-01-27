@@ -20,6 +20,7 @@ public class ServerSimulatioNode : IServerNode
     public Dictionary<long, int> IdToNextIndex { get => ((IServerNode)_innerServerNode).IdToNextIndex; set => ((IServerNode)_innerServerNode).IdToNextIndex = value; }
     public Dictionary<long, bool?> IdToLogValidationStatus { get => ((IServerNode)_innerServerNode).IdToLogValidationStatus; set => ((IServerNode)_innerServerNode).IdToLogValidationStatus = value; }
     public bool isPaused {get; set;} = false;
+    public Dictionary<int, string> InternalStateMachine { get => ((IServerNode)_innerServerNode).InternalStateMachine; set => ((IServerNode)_innerServerNode).InternalStateMachine = value; }
 
     public ServerSimulatioNode(ServerNode innerServerNode)
     {

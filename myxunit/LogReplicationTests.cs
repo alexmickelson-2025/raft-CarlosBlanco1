@@ -369,4 +369,33 @@ public class LogReplicationTests
 
         Assert.True(follower.State == ServerState.Candidate);
     }
+
+    //Test 13 
+    [Fact]
+
+    public void GivenLeaderCommitsLogItAppliesToInternalStateMachine()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+        follower1.NodeId = 1;
+
+        var follower2 = Substitute.For<IServerNode>();
+        follower2.NodeId = 2;
+
+        var leader = new ServerNode([follower1, follower2]);
+        leader.TransitionToLeader();
+
+        var initialCommitIndex = leader.CommitIndex;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        leader.SendCommandToLeader(newLogEntry);
+
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
+
+        Thread.Sleep(50);
+
+        Assert.True(leader.InternalStateMachine[8] == "XD");
+    }
+
 }

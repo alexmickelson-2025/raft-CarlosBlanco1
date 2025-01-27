@@ -18,7 +18,7 @@ public class ServerNode : IServerNode
     public int CommitIndex { get; set;}
     public Dictionary<long, int> IdToNextIndex { get; set;}
     public Dictionary<long, bool?> IdToLogValidationStatus { get; set; }
-
+    public Dictionary<int, string> InternalStateMachine { get; set; }
     public int numberOfElectionsCalled = 0;
     public bool wasVoteRequestedForThisTerm = false;
     public bool wasResponseToClientSent = false;
@@ -39,6 +39,7 @@ public class ServerNode : IServerNode
         IdToLogValidationStatus[NodeId] = null;
                 
         IdToNextIndex = [];
+        InternalStateMachine = [];
 
         CommitIndex = 0;
         CurrentTerm = startTerm;
@@ -134,8 +135,7 @@ public class ServerNode : IServerNode
 
                 if (nodesThatValidated >= majorityNum)
                 {
-                    CommitIndex++;
-                    SendConfirmationResponseToClient();
+                    CommitEntry(Logs[^1]);
                 }
             }
             else
@@ -144,6 +144,22 @@ public class ServerNode : IServerNode
             }
 
             return;
+        }
+    }
+
+    public void CommitEntry(LogEntry? entry)
+    {
+        CommitIndex++;
+        SendConfirmationResponseToClient();
+
+        if(entry!=null){
+
+            string command = entry.Command.Replace(" ","");
+            int key = (int)char.GetNumericValue(command[3]);
+
+            string value = command.Substring(6);
+
+            InternalStateMachine[key] = value;
         }
     }
 
