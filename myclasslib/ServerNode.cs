@@ -77,7 +77,7 @@ public class ServerNode : IServerNode
 
         IServerNode potentialLeader = IdToNode[senderId];
 
-        if (senderTerm > CurrentTerm)
+        if (senderTerm >= CurrentTerm) 
         {
             ElectionTimer?.Stop();
             StartNewElectionTimer();
@@ -85,19 +85,6 @@ public class ServerNode : IServerNode
             State = ServerState.Follower;
             CurrentTerm = senderTerm;
             wasVoteRequestedForThisTerm = false;
-            LeaderNodeId = senderId;
-            CommitIndex = highestCommitedIndex ?? 0;
-
-            if(entry != null) Logs.Add(entry);
-
-            await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex);
-        }
-        else if (senderTerm == CurrentTerm) 
-        {
-            ElectionTimer?.Stop();
-            StartNewElectionTimer();
-
-            State = ServerState.Follower;
             LeaderNodeId = senderId;
             CommitIndex = highestCommitedIndex ?? 0;
 
