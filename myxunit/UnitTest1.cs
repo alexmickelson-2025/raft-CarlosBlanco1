@@ -152,9 +152,9 @@ public class UnitTest1
         // leader.StartTheThing();
         Thread.Sleep(50);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, Arg.Any<int>());
-        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, Arg.Any<int>());
-        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, Arg.Any<int>());
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, Arg.Any<int>(), Arg.Any<int>());
+        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, Arg.Any<int>(), Arg.Any<int>());
+        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, Arg.Any<int>(), Arg.Any<int>());
     }
 
     //Test 11
@@ -255,7 +255,7 @@ public class UnitTest1
 
         var candidate = new ServerNode([nodeWithHigherTerm], startTerm: 1);
 
-        nodeWithHigherTerm.AppendEntriesRPC(nodeWithHigherTerm.NodeId, nodeWithHigherTerm.CurrentTerm, null, null);
+        nodeWithHigherTerm.AppendEntriesRPC(nodeWithHigherTerm.NodeId, nodeWithHigherTerm.CurrentTerm, null, null, null);
 
         Assert.True(candidate.State == ServerState.Follower);
     }
@@ -301,9 +301,9 @@ public class UnitTest1
         Thread.Sleep(300);
 
         Assert.True(futureLeader.State == ServerState.Leader);
-        follower1.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, Arg.Any<int>());
-        follower2.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, Arg.Any<int>());
-        follower3.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, Arg.Any<int>());
+        follower1.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, Arg.Any<int>(), Arg.Any<int>());
+        follower2.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, Arg.Any<int>(), Arg.Any<int>());
+        follower3.Received().AppendEntriesRPC(futureLeader.NodeId, futureLeader.CurrentTerm, null, Arg.Any<int>(), Arg.Any<int>());
     }
 
     //Test 15

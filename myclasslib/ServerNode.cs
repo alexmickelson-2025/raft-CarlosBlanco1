@@ -71,7 +71,7 @@ public class ServerNode : IServerNode
 
     }
 
-    public async Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry = null, int? highestCommitedIndex = 0)
+    public async Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry = null, int? entryIndex = 0, int? highestCommitedIndex = 0)
     {
         if (State == ServerState.Paused) return;
 
@@ -86,6 +86,7 @@ public class ServerNode : IServerNode
             CurrentTerm = senderTerm;
             wasVoteRequestedForThisTerm = false;
             LeaderNodeId = senderId;
+            CommitIndex = highestCommitedIndex ?? 0;
 
             if(entry != null) Logs.Add(entry);
 
@@ -98,6 +99,7 @@ public class ServerNode : IServerNode
 
             State = ServerState.Follower;
             LeaderNodeId = senderId;
+            CommitIndex = highestCommitedIndex ?? 0;
 
             if(entry != null) Logs.Add(entry);
 
@@ -220,12 +222,13 @@ public class ServerNode : IServerNode
     }
     public async Task SendHeartBeat()
     {
-        LogEntry? mostRecent = Logs.Count == 0? null : Logs[^1];
+        int mostRecentIndex = Logs.Count - 1;
+        LogEntry? mostRecent = Logs.Count == 0? null : Logs[mostRecentIndex];
 
         foreach (var idAndNode in IdToNode)
         {
             if(idAndNode.Value.NodeId == NodeId) continue;
-            await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm, mostRecent, CommitIndex);
+            await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm, mostRecent, mostRecentIndex, CommitIndex);
         }
     }
     public async Task SendVotes()

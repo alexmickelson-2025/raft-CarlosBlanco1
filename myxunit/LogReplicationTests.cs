@@ -49,9 +49,9 @@ public class LogReplicationTests
 
         Thread.Sleep(50);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
-        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
-        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex);
+        follower2.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex);
+        follower3.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex);
     }
 
     // Test 16
@@ -90,11 +90,11 @@ public class LogReplicationTests
         leader.SendCommandToLeader(newLogEntry);
 
         Thread.Sleep(100);
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex);
         follower1.ClearReceivedCalls();
 
         Thread.Sleep(100);
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex);
     }
 
     // Test 6
@@ -113,7 +113,7 @@ public class LogReplicationTests
 
         Thread.Sleep(200);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex);
     }
 
     //Test 5
@@ -223,7 +223,7 @@ public class LogReplicationTests
 
         leader.SendCommandToLeader(newLogEntry);
 
-        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
         .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
 
         Thread.Sleep(50);
@@ -253,7 +253,7 @@ public class LogReplicationTests
 
         leader.SendCommandToLeader(newLogEntry);
 
-        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
         .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
 
         Thread.Sleep(50);
@@ -281,7 +281,7 @@ public class LogReplicationTests
 
         leader.SendCommandToLeader(newLogEntry);
 
-        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
         .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: true, follower1.CurrentTerm, follower1.CommitIndex));
 
         Thread.Sleep(50);
@@ -303,14 +303,14 @@ public class LogReplicationTests
 
         Thread.Sleep(50);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.Logs.Count - 1, leader.CommitIndex);
         leader.TransitionToPaused();
 
         follower1.ClearReceivedCalls();
 
         Thread.Sleep(400);
 
-        follower1.DidNotReceive().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        follower1.DidNotReceive().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.Logs.Count - 1, leader.CommitIndex);
     }
 
     [Fact]
@@ -324,20 +324,20 @@ public class LogReplicationTests
 
         Thread.Sleep(50);
 
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.Logs.Count - 1, leader.CommitIndex);
         leader.TransitionToPaused();
 
         follower1.ClearReceivedCalls();
 
         Thread.Sleep(400);
 
-        follower1.DidNotReceive().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        follower1.DidNotReceive().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.Logs.Count - 1, leader.CommitIndex);
         leader.TransitionToLeader();
 
         follower1.ClearReceivedCalls();
 
         Thread.Sleep(50);
-        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.CommitIndex);
+        follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, leader.Logs.Count - 1, leader.CommitIndex);
     }
 
     [Fact]
@@ -390,12 +390,32 @@ public class LogReplicationTests
 
         leader.SendCommandToLeader(newLogEntry);
 
-        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.CommitIndex))
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
         .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
 
         Thread.Sleep(50);
 
         Assert.True(leader.InternalStateMachine[8] == "XD");
+    }
+
+    //Test 14 Part 1
+    [Fact]
+
+    public async Task WhenFollowerReceivesValidHeartbeatItIncreasesItsCommitIndexToMatch()
+    {
+        var fakeLeader = Substitute.For<IServerNode>();
+        fakeLeader.NodeId = 1;
+        fakeLeader.CurrentTerm = 2;
+        fakeLeader.CommitIndex = 3;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        var follower = new ServerNode([fakeLeader]);
+        Assert.False(follower.CommitIndex == fakeLeader.CommitIndex);
+
+        await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, newLogEntry, 1, fakeLeader.CommitIndex);
+
+        Assert.True(follower.CommitIndex == fakeLeader.CommitIndex);
     }
 
 }

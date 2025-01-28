@@ -100,9 +100,9 @@ public class ServerSimulatioNode : IServerNode
         ((IServerNode)_innerServerNode).SendCommandToLeader(entry);
     }
 
-    public Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry, int? highestCommitedIndex)
+    public Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry, int? entryIndex, int? highestCommitedIndex)
     {
-        return ((IServerNode)_innerServerNode).AppendEntriesRPC(senderId, senderTerm, entry, highestCommitedIndex);
+        return ((IServerNode)_innerServerNode).AppendEntriesRPC(senderId, senderTerm, entry, entryIndex, highestCommitedIndex);
     }
 
     public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex)
