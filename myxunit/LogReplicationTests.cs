@@ -226,6 +226,9 @@ public class LogReplicationTests
         follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
         .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
 
+        follower2.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower2.NodeId, isResponseRejecting: false, follower2.CurrentTerm, follower2.CommitIndex));
+
         Thread.Sleep(50);
 
         Assert.True(initialCommitIndex < leader.CommitIndex);
@@ -446,6 +449,24 @@ public class LogReplicationTests
         await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, newLogEntry, 1, fakeLeader.CommitIndex);
 
         Assert.True(follower.CommitIndex == fakeLeader.CommitIndex);
+    }
+
+    //Test 7
+    [Fact]
+
+    public async Task WhenAFollowerLearnsLogEntryIsCommitedItAppliesTheEntryToItsLocalStateMachine()
+    {
+        var fakeLeader = Substitute.For<IServerNode>();
+        fakeLeader.NodeId = 1;
+        fakeLeader.CurrentTerm = 2;
+        fakeLeader.CommitIndex = 0;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        var follower = new ServerNode([fakeLeader]);
+        await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, newLogEntry, 0, highestCommitedIndex: 0);
+
+        Assert.True(follower.InternalStateMachine[8] == "XD");
     }
 
 }

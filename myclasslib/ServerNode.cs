@@ -86,9 +86,8 @@ public class ServerNode : IServerNode
             CurrentTerm = senderTerm;
             wasVoteRequestedForThisTerm = false;
             LeaderNodeId = senderId;
-            CommitIndex = highestCommitedIndex ?? 0;
-
             if(entry != null) Logs.Add(entry);
+            if(entry != null) CommitEntry(entry, highestCommitedIndex);
 
             await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex);
         }
@@ -124,7 +123,7 @@ public class ServerNode : IServerNode
 
                 if (nodesThatValidated >= majorityNum)
                 {
-                    CommitEntry(Logs[^1]);
+                    CommitEntry(Logs[^1], null);
                 }
             }
             else
@@ -136,9 +135,9 @@ public class ServerNode : IServerNode
         }
     }
 
-    public void CommitEntry(LogEntry? entry)
+    public void CommitEntry(LogEntry? entry, int? newCommitIndex)
     {
-        CommitIndex++;
+        CommitIndex = newCommitIndex.HasValue ? newCommitIndex.Value : CommitIndex + 1; 
         SendConfirmationResponseToClient();
 
         if(entry!=null){
