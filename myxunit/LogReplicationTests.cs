@@ -173,6 +173,7 @@ public class LogReplicationTests
         fakeLeader.CommitIndex = 0;
 
         var follower = new ServerNode([fakeLeader]);
+        follower.Logs = [new LogEntry(_term: 2, _command: "SET 4 -> XD"), new LogEntry(_term: 2, _command: "SET 3 -> XD")];
         
         var newLogEntry1 = new LogEntry(_term: 2, _command: "SET 8 -> XD");
         var newLogEntry2 = new LogEntry(_term: 2, _command: "SET 5 -> TAMAL");
@@ -180,7 +181,7 @@ public class LogReplicationTests
         _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, [newLogEntry1], 0, fakeLeader.CommitIndex);
         _ = follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, [newLogEntry2], 0, fakeLeader.CommitIndex);
 
-        Assert.True(follower.Logs.Count == 2);
+        Assert.True(follower.Logs.Count == 4);
         Assert.Contains(newLogEntry1, follower.Logs);
         Assert.Contains(newLogEntry2, follower.Logs);
     }
@@ -523,8 +524,6 @@ public class LogReplicationTests
         var leader = new ServerNode([follower1]);
         await leader.TransitionToLeader();
 
-        var initialCommitIndex = leader.CommitIndex;
-
         var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
 
         leader.SendCommandToLeader(newLogEntry);
@@ -533,5 +532,52 @@ public class LogReplicationTests
 
         await follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, leader.Logs, leader.Logs.Count - 1, leader.CommitIndex);
     }
+
+    //Test 15 part 2
+    [Fact]
+    public async Task WhenAppendEntriesGetsRejectedLeaderDecreasesNextIndexValue()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+        follower1.NodeId = 1;
+
+        var leader = new ServerNode([follower1]);
+        await leader.TransitionToLeader();
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        leader.SendCommandToLeader(newLogEntry);
+
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, leader.Logs, leader.Logs.Count - 1, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: true, follower1.CurrentTerm, follower1.CommitIndex));
+
+        Assert.True(leader.IdToNextIndex[follower1.NodeId] == 0);
+
+        Thread.Sleep(50);
+
+        Assert.True(leader.IdToNextIndex[follower1.NodeId] < 0);
+    }
+
+    //Test 15 part 3
+    [Fact]
+    public async Task IfFollowerDoesntFindEntryWithSameIndexAndTermItRejects()
+    {
+        var fakeLeader = Substitute.For<IServerNode>();
+        fakeLeader.NodeId = 1;
+        fakeLeader.CurrentTerm = 2;
+        fakeLeader.CommitIndex = 0;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        var follower = new ServerNode([fakeLeader]);
+
+        follower.Logs = new List<LogEntry>(){new LogEntry(_term: 3, _command: "SET 8 -> XD")};
+
+        await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, [newLogEntry], 0, 0);
+
+        await fakeLeader.Received().ResponseAppendEntriesRPC(fakeLeader.NodeId, isResponseRejecting: true, fakeLeader.CurrentTerm, fakeLeader.CommitIndex);
+    }
+
+
+
 
 }

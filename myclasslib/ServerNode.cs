@@ -87,10 +87,20 @@ public class ServerNode : IServerNode
             wasVoteRequestedForThisTerm = false;
             LeaderNodeId = senderId;
 
-            if(entryIndex <= Logs.Count)
+            if(entries != null && highestCommitedIndex.HasValue) CommitEntry(entries[highestCommitedIndex.Value], highestCommitedIndex);
+            if(entryIndex < Logs.Count)
             {
-                if(entries != null && entryIndex.HasValue) Logs.Add(entries[entryIndex.Value]);
-                if(entries != null && highestCommitedIndex.HasValue) CommitEntry(entries[highestCommitedIndex.Value], highestCommitedIndex);
+                if(entries != null && entryIndex.HasValue) 
+                {
+                    if(Logs[entryIndex.Value].Term != entries[entryIndex.Value].Term)
+                    {
+                        await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex);
+                    }
+                    else
+                    {
+                        Logs.Add(entries[entryIndex.Value]);
+                    }
+                }
             }
             else
             {
@@ -109,8 +119,13 @@ public class ServerNode : IServerNode
     {
         if(isResponseRejecting)
         {
-            CurrentTerm = IdToNode[senderId].CurrentTerm;
-            await TransitionToFollower();
+            IdToNextIndex[senderId] -= 1;
+
+            if(senderTerm > CurrentTerm)
+            {
+                CurrentTerm = IdToNode[senderId].CurrentTerm;
+                await TransitionToFollower();
+            }
         }
         else
         {
