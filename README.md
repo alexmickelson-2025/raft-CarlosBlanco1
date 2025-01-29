@@ -13,9 +13,9 @@
 11. (DONE) A follower's response to an AppendEntries includes the follower's term number and if it was sucessfulOrNot
 12. (DONE) When a leader receives majority responses from the clients after a log replication heartbeat, the leader sends a confirmation response to the client.  
 13. (DONE) Given a leader node, when a log is committed, it applies it to its internal state machine.  
-14. (DONE partial) when a follower receives a valid heartbeat, it increases its commitIndex to match the commit index of the heartbeat
+14. (DONE) when a follower receives a valid heartbeat, it increases its commitIndex to match the commit index of the heartbeat
     1. reject the heartbeat if the previous log index / term number does not match your log 
-15. When sending an AppendEntries RPC, the leader includes the index and term of the entry in its log that immediately precedes the new entries.  
+15. (DONE) When sending an AppendEntries RPC, the leader includes the index and term of the entry in its log that immediately precedes the new entries.  
     1. If the follower does not find an entry in its log with the same index and term, then it refuses the new entries.  
         1. Term must be the same or newer.  
         2. If the index is greater, it will be decreased by the leader.  

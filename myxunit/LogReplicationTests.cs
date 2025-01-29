@@ -512,4 +512,26 @@ public class LogReplicationTests
 
         await fakeLeader.Received().ResponseAppendEntriesRPC(fakeLeader.NodeId, isResponseRejecting: false, fakeLeader.CurrentTerm, fakeLeader.CommitIndex);
     }
+
+    //Test 15
+    [Fact]
+    public async Task WhenSendingAppendEntriesRPCLeaderIncludesOndexAndTermOfEntryThatPrecedesNewEntries()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+        follower1.NodeId = 1;
+
+        var leader = new ServerNode([follower1]);
+        await leader.TransitionToLeader();
+
+        var initialCommitIndex = leader.CommitIndex;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        leader.SendCommandToLeader(newLogEntry);
+
+        Thread.Sleep(50);
+
+        await follower1.Received().AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, leader.Logs, leader.Logs.Count - 1, leader.CommitIndex);
+    }
+
 }
