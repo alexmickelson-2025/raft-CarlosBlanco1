@@ -24,8 +24,8 @@
 16. (DONE) When a leader sends a heartbeat with a log but does not receive responses from a majority of nodes, the entry is uncommitted.  
 17. (DONE) If a leader does not receive a response from a follower, the leader continues to send the log entries in subsequent heartbeats.  
 18. (DONE) If a leader cannot commit an entry, it does not send a response to the client.  
-19. If a node receives an AppendEntries with logs that are too far in the future from its local state, it should reject the AppendEntries.  
-20. If a node receives an AppendEntries with a term and index that do not match, it will reject the AppendEntries until it finds a matching log.  
+19. (DONE) If a node receives an AppendEntries with logs that are too far in the future from its local state, it should reject the AppendEntries.  
+20. (DONE) If a node receives an AppendEntries with a term and index that do not match, it will reject the AppendEntries until it finds a matching log.  
 
 ## Log Replication Test Scenarios
 

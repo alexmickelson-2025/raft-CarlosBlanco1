@@ -467,4 +467,49 @@ public class LogReplicationTests
 
         Assert.True(follower.InternalStateMachine[8] == "XD");
     }
+
+    //Test 19
+    [Fact]
+    public async Task WhenNodeReceivesLogsTooFarInTheFutureItRejectsAppendEntries()
+    {
+        var fakeLeader = Substitute.For<IServerNode>();
+        fakeLeader.NodeId = 1;
+        fakeLeader.CurrentTerm = 2;
+        fakeLeader.CommitIndex = 0;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        var follower = new ServerNode([fakeLeader]);
+        await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, [newLogEntry], entryIndex: 100, highestCommitedIndex: 0);
+
+        await fakeLeader.Received().ResponseAppendEntriesRPC(fakeLeader.NodeId, isResponseRejecting: false, fakeLeader.CurrentTerm, fakeLeader.CommitIndex);
+    }
+
+    //Test 20
+    [Fact]
+    public async Task WhenNodeReceivesAppendEntriesWithUnmatchingTermAndIndexItRejectsUntilItGetsMatchingLog()
+    {
+        var fakeLeader = Substitute.For<IServerNode>();
+        fakeLeader.NodeId = 1;
+        fakeLeader.CurrentTerm = 2;
+        fakeLeader.CommitIndex = 0;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        var follower = new ServerNode([fakeLeader]);
+
+        await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, [newLogEntry], entryIndex: 100, highestCommitedIndex: 0);
+
+        await fakeLeader.Received().ResponseAppendEntriesRPC(fakeLeader.NodeId, isResponseRejecting: true, fakeLeader.CurrentTerm, fakeLeader.CommitIndex);
+        fakeLeader.ClearReceivedCalls();
+
+        await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, [newLogEntry], entryIndex: 30, highestCommitedIndex: 0);
+
+        await fakeLeader.Received().ResponseAppendEntriesRPC(fakeLeader.NodeId, isResponseRejecting: true, fakeLeader.CurrentTerm, fakeLeader.CommitIndex);
+        fakeLeader.ClearReceivedCalls();
+
+        await follower.AppendEntriesRPC(fakeLeader.NodeId, fakeLeader.CurrentTerm, [newLogEntry], entryIndex: 0, highestCommitedIndex: 0);
+
+        await fakeLeader.Received().ResponseAppendEntriesRPC(fakeLeader.NodeId, isResponseRejecting: false, fakeLeader.CurrentTerm, fakeLeader.CommitIndex);
+    }
 }

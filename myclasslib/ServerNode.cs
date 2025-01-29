@@ -92,7 +92,10 @@ public class ServerNode : IServerNode
                 if(entries != null && entryIndex.HasValue) Logs.Add(entries[entryIndex.Value]);
                 if(entries != null && highestCommitedIndex.HasValue) CommitEntry(entries[highestCommitedIndex.Value], highestCommitedIndex);
             }
-
+            else
+            {
+                await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex);
+            }
 
             await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex);
         }
