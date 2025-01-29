@@ -14,7 +14,7 @@ public interface IServerNode
     public Dictionary<long, int> IdToNextIndex {get; set;}
     public Dictionary<long, bool?> IdToLogValidationStatus {get; set;}
     public Dictionary<int, string> InternalStateMachine {get; set;}
-    public Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry, int? entryIndex, int? highestCommitedIndex);
+    public Task AppendEntriesRPC(long senderId, int senderTerm, List<LogEntry>? entries, int? entryIndex, int? highestCommitedIndex);
     public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex);
     public Task RequestVoteRPC(long senderId, int senderTerm);
     public Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven);

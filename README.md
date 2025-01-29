@@ -6,14 +6,14 @@
 4. (DONE) When a leader wins an election, it initializes the nextIndex for each follower to the index just after the last one in its log.  
 5. (DONE) Leaders maintain a "nextIndex" for each follower that is the index of the next log entry the leader will send to that follower.  
 6. (DONE) The highest committed index from the leader is included in AppendEntries RPCs.  
-7. When a follower learns that a log entry is committed, it applies the entry to its local state machine.  
+7. (DONE) When a follower learns that a log entry is committed, it applies the entry to its local state machine.  
 8.(DONE) When the leader has received a majority confirmation of a log, it commits it.  
 9. (DONE) The leader commits logs by incrementing its committed log index.  
 10. (DONE) Given a follower receives an AppendEntries with logs, it will add those entries to its personal log.  
 11. (DONE) A follower's response to an AppendEntries includes the follower's term number and if it was sucessfulOrNot
 12. (DONE) When a leader receives majority responses from the clients after a log replication heartbeat, the leader sends a confirmation response to the client.  
 13. (DONE) Given a leader node, when a log is committed, it applies it to its internal state machine.  
-14. (DONE) when a follower receives a valid heartbeat, it increases its commitIndex to match the commit index of the heartbeat
+14. (DONE partial) when a follower receives a valid heartbeat, it increases its commitIndex to match the commit index of the heartbeat
     1. reject the heartbeat if the previous log index / term number does not match your log 
 15. When sending an AppendEntries RPC, the leader includes the index and term of the entry in its log that immediately precedes the new entries.  
     1. If the follower does not find an entry in its log with the same index and term, then it refuses the new entries.  

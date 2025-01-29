@@ -71,7 +71,7 @@ public class ServerNode : IServerNode
 
     }
 
-    public async Task AppendEntriesRPC(long senderId, int senderTerm, LogEntry? entry = null, int? entryIndex = 0, int? highestCommitedIndex = 0)
+    public async Task AppendEntriesRPC(long senderId, int senderTerm, List<LogEntry>? entries, int? entryIndex, int? highestCommitedIndex)
     {
         if (State == ServerState.Paused) return;
 
@@ -86,21 +86,19 @@ public class ServerNode : IServerNode
             CurrentTerm = senderTerm;
             wasVoteRequestedForThisTerm = false;
             LeaderNodeId = senderId;
-            if(entry != null) Logs.Add(entry);
-            if(entry != null) CommitEntry(entry, highestCommitedIndex);
+
+            if(entryIndex <= Logs.Count)
+            {
+                if(entries != null && entryIndex.HasValue) Logs.Add(entries[entryIndex.Value]);
+                if(entries != null && highestCommitedIndex.HasValue) CommitEntry(entries[highestCommitedIndex.Value], highestCommitedIndex);
+            }
+
 
             await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex);
         }
         else
         {
-            if(senderTerm < CurrentTerm)
-            {
-                await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex);
-            }
-            else
-            {
-                return;
-            }
+            await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex);
         }
     }
 
@@ -138,7 +136,8 @@ public class ServerNode : IServerNode
     public void CommitEntry(LogEntry? entry, int? newCommitIndex)
     {
         CommitIndex = newCommitIndex.HasValue ? newCommitIndex.Value : CommitIndex + 1; 
-        SendConfirmationResponseToClient();
+        
+        if(LeaderNodeId == NodeId) SendConfirmationResponseToClient();
 
         if(entry!=null){
 
@@ -209,12 +208,11 @@ public class ServerNode : IServerNode
     public async Task SendHeartBeat()
     {
         int mostRecentIndex = Logs.Count - 1;
-        LogEntry? mostRecent = Logs.Count == 0? null : Logs[mostRecentIndex];
 
         foreach (var idAndNode in IdToNode)
         {
             if(idAndNode.Value.NodeId == NodeId) continue;
-            await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm, mostRecent, mostRecentIndex, CommitIndex);
+            await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm, Logs, mostRecentIndex, CommitIndex);
         }
     }
     public async Task SendVotes()
