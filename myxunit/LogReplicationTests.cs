@@ -231,7 +231,37 @@ public class LogReplicationTests
         Assert.True(initialCommitIndex < leader.CommitIndex);
     }
 
-    //Test 8 Q: How is this one different from test 9, aren't we just checking that the commit index increased in both of them?
+    //Test 8
+    [Fact]
+
+    public void WhenLeaderHasReceivedMajorityOfVotesItCommits()
+    {
+        var follower1 = Substitute.For<IServerNode>();
+        follower1.NodeId = 1;
+
+        var follower2 = Substitute.For<IServerNode>();
+        follower2.NodeId = 2;
+
+        var leader = new ServerNode([follower1, follower2]);
+        leader.TransitionToLeader();
+
+        var initialCommitIndex = leader.CommitIndex;
+
+        var newLogEntry = new LogEntry(_term: 2, _command: "SET 8 -> XD");
+
+        leader.SendCommandToLeader(newLogEntry);
+
+        follower1.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower1.NodeId, isResponseRejecting: false, follower1.CurrentTerm, follower1.CommitIndex));
+
+        follower2.When(x => x.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, newLogEntry, leader.Logs.Count - 1, leader.CommitIndex))
+        .Do(async _ => await leader.ResponseAppendEntriesRPC(follower2.NodeId, isResponseRejecting: false, follower2.CurrentTerm, follower2.CommitIndex));
+
+        Thread.Sleep(50);
+
+        Assert.True(leader.CommitIndex == 1);
+    }
+
 
     //Test 12
     [Fact]

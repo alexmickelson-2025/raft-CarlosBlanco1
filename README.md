@@ -7,7 +7,7 @@
 5. (DONE) Leaders maintain a "nextIndex" for each follower that is the index of the next log entry the leader will send to that follower.  
 6. (DONE) The highest committed index from the leader is included in AppendEntries RPCs.  
 7. When a follower learns that a log entry is committed, it applies the entry to its local state machine.  
-8. When the leader has received a majority confirmation of a log, it commits it.  
+8.(DONE) When the leader has received a majority confirmation of a log, it commits it.  
 9. (DONE) The leader commits logs by incrementing its committed log index.  
 10. (DONE) Given a follower receives an AppendEntries with logs, it will add those entries to its personal log.  
 11. (DONE) A follower's response to an AppendEntries includes the follower's term number and if it was sucessfulOrNot
