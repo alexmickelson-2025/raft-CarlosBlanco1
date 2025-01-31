@@ -21,6 +21,7 @@ public class ServerSimulatioNode : IServerNode
     public Dictionary<long, bool?> IdToLogValidationStatus { get => ((IServerNode)_innerServerNode).IdToLogValidationStatus; set => ((IServerNode)_innerServerNode).IdToLogValidationStatus = value; }
     public bool isPaused {get; set;} = false;
     public Dictionary<int, string> InternalStateMachine { get => ((IServerNode)_innerServerNode).InternalStateMachine; set => ((IServerNode)_innerServerNode).InternalStateMachine = value; }
+    public List<LogEntry> Logs { get => ((IServerNode)_innerServerNode).Logs; set => ((IServerNode)_innerServerNode).Logs = value; }
 
     public ServerSimulatioNode(ServerNode innerServerNode)
     {
@@ -95,9 +96,9 @@ public class ServerSimulatioNode : IServerNode
         return ((IServerNode)_innerServerNode).TransitionToFollower();
     }
 
-    public void SendCommandToLeader(LogEntry entry)
+    public bool SendCommandToLeader(LogEntry entry)
     {
-        ((IServerNode)_innerServerNode).SendCommandToLeader(entry);
+        return ((IServerNode)_innerServerNode).SendCommandToLeader(entry);
     }
 
     public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex)

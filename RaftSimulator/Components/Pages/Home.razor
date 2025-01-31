@@ -26,43 +26,125 @@
     </label>
 </div>
 
+
 <div class="d-flex gap-5">
     @foreach (var node in nodes)
     {
         var timeoutRemaining = DateTime.Now - node._innerServerNode.ElectionTimerStartedAt;
         var maxIntervalMilliseconds = 300 * ServerSimulatioNode.IntervalScaleValue;
         var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds) / maxIntervalMilliseconds));
+        bool? SucessState = null;
 
-        <div class="d-flex flex-column gap-2 border border-black p-3">
-            
-            @if(node.isPaused == false) {
-                <button type="button" class="btn btn-danger" @onclick="async () => await node.TransitionToPaused()">PAUSE</button>
-            }
-            else{
-                <button type="button" class="btn btn-danger" @onclick="async () => await node.TransitionToFollower()">UNPAUSE</button>
-            }
+        <div class="d-flex flex-column gap-2">
+            <div>
+                <p>Create New Command</p>
+                <form @onsubmit="() => { SendCommand(node); }">
 
-            <p>@node.NodeId</p>
-            <p>@node.State</p>
-            <p>Election Interval (x @node._innerServerNode.timeoutForTimer): @node.ElectionTimer.Interval</p>
-            <p>Current Term: @node.CurrentTerm</p>
-            <p>Leader is @node.LeaderNodeId</p>
-            <div class="progress" role="progressbar" aria-label="Basic example"
-                aria-valuenow=@(Math.Abs(timeoutRemaining.TotalMilliseconds)) aria-valuemin="0"
-                aria-valuemax="@(maxIntervalMilliseconds)">
-                <div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;">@percentageRemaining</div>
+                    <label>
+                        Key
+                        <input type="text" @bind="Key">
+                    </label>
+                    <label>
+                        Value
+                        <input type="text" @bind="Value">
+                    </label>
+                    <button type="submit">Send Command</button>
+                </form>
+
+                @if (SuccessStates.ContainsKey(node) && SuccessStates[node].HasValue)
+                {
+                    if (SuccessStates[node].Value)
+                    {
+                        <div class="p-3 mb-2 bg-success text-white">Command Appended Successfully</div>
+                    }
+                    else
+                    {
+                        <div class="p-3 mb-2 bg-danger text-white">Error While Appending Command</div>
+                    }
+                }
+
+            </div>
+
+            <div class="d-flex flex-column gap-2 border border-black p-3">
+
+                @if (node.isPaused == false)
+                {
+                    <button type="button" class="btn btn-danger"
+                        @onclick="async () => await node.TransitionToPaused()">PAUSE</button>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger"
+                        @onclick="async () => await node.TransitionToFollower()">UNPAUSE</button>
+                }
+
+                <p>@node.NodeId</p>
+                <p>@node.State</p>
+                <p>Election Interval (x @node._innerServerNode.timeoutForTimer): @node.ElectionTimer.Interval</p>
+                <p>Current Term: @node.CurrentTerm</p>
+                <p>Leader is @node.LeaderNodeId</p>
+                <div class="progress" role="progressbar" aria-label="Basic example"
+                    aria-valuenow=@(Math.Abs(timeoutRemaining.TotalMilliseconds)) aria-valuemin="0"
+                    aria-valuemax="@(maxIntervalMilliseconds)">
+                    <div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;">@percentageRemaining
+                    </div>
+                </div>
+                <div>
+                    <div>Commit Index: @node.CommitIndex</div>
+                </div>
+                <div>
+                    <p>INTERNAL STATE MACHINE:</p>
+                    @foreach (var command in node.InternalStateMachine)
+                    {
+                        <div>Key: @command.Key</div>
+                        <div>Value: @command.Value</div>
+                    }
+                </div>
+                <div>
+                    <p>LOGS</p>
+                    <div>
+                        @for (int i = 0; i < node.Logs.Count; i++)
+                        {
+                            <div>
+                                <p>Index: @i</p>
+                                <p>Term: @node.Logs[i].Term</p>
+                                <p>Command: @node.Logs[i].Command</p>
+
+                                @if (i <= node.CommitIndex)
+                                {
+                                    <div class="p-3 mb-2 bg-success text-white">Commited</div>
+                                }
+                                else
+                                {
+                                    <div class="p-3 mb-2 bg-danger text-white">Not Commited</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
             </div>
         </div>
     }
 </div>
 
 @code {
+    private string Key { get; set; } = "";
+    private string Value { get; set; } = "";
+    private Dictionary<ServerSimulatioNode, bool?> SuccessStates = new();
+
+    private void SendCommand(ServerSimulatioNode node)
+    {
+        bool result = node.SendCommandToLeader(new LogEntry(_term: node.CurrentTerm, _command: $"SET {Key} -> {Value}"));
+        SuccessStates[node] = result;
+        StateHasChanged();
+    }
+
     private List<ServerSimulatioNode> nodes = [];
     Timer? timer;
     public void startSimulation()
     {
         nodes = [];
-        
+
         var node1 = new ServerNode([]);
         var node2 = new ServerNode([]);
         var node3 = new ServerNode([]);

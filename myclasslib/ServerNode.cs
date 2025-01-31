@@ -41,7 +41,7 @@ public class ServerNode : IServerNode
         IdToNextIndex = [];
         InternalStateMachine = [];
 
-        CommitIndex = 0;
+        CommitIndex = -1;
         CurrentTerm = startTerm;
 
         AddNeighbors(neighbors);
@@ -87,10 +87,23 @@ public class ServerNode : IServerNode
             wasVoteRequestedForThisTerm = false;
             LeaderNodeId = senderId;
 
-            if(entries != null && highestCommitedIndex.HasValue) CommitEntry(entries[highestCommitedIndex.Value], highestCommitedIndex);
-            if(entryIndex < Logs.Count)
+            if(entryIndex == CommitIndex){
+                await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex);
+                return;
+            }
+
+            if(highestCommitedIndex.HasValue && highestCommitedIndex.Value < entries.Count - 1 && highestCommitedIndex > -1) CommitEntry(entries[highestCommitedIndex.Value], highestCommitedIndex);
+
+            if(entryIndex <= Logs.Count)
             {
-                if(entries != null && entryIndex.HasValue) 
+                Console.WriteLine($"received entry at {entryIndex}");
+                if(Logs.Count == 0)
+                {
+                    if(entries.Count > 0)Logs.Add(entries[entryIndex.Value]);
+                    await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex);
+                    return;
+                }
+                if(entryIndex.Value <= Logs.Count) 
                 {
                     if(Logs[entryIndex.Value].Term != entries[entryIndex.Value].Term)
                     {
@@ -139,7 +152,7 @@ public class ServerNode : IServerNode
 
                 if (nodesThatValidated >= majorityNum)
                 {
-                    CommitEntry(Logs[^1], null);
+                    if(Logs.Count != 0) CommitEntry(Logs[^1], null);
                 }
             }
             else
@@ -225,7 +238,7 @@ public class ServerNode : IServerNode
     }
     public async Task SendHeartBeat()
     {
-        int mostRecentIndex = Logs.Count - 1;
+        int mostRecentIndex = Logs.Count == 0? 0 : Logs.Count - 1;
 
         foreach (var idAndNode in IdToNode)
         {
@@ -318,10 +331,13 @@ public class ServerNode : IServerNode
         return Task.CompletedTask;
     }
 
-    public void SendCommandToLeader(LogEntry entry)
+    public bool SendCommandToLeader(LogEntry entry)
     {
+        if(NodeId != LeaderNodeId) return false;
         Logs.Add(entry);
         IdToLogValidationStatus[NodeId] = true;
+
+        return true;
     }
 
     public void SendConfirmationResponseToClient()

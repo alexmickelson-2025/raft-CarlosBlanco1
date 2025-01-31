@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "myxunit", "myxunit\myxunit.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftSimulator", "RaftSimulator\RaftSimulator.csproj", "{850D673D-2C71-4751-9F3E-3368EEF02153}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RaftApi", "RaftApi\RaftApi.csproj", "{324FA91D-4CA5-4692-9F64-FD206ABA227D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{850D673D-2C71-4751-9F3E-3368EEF02153}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{850D673D-2C71-4751-9F3E-3368EEF02153}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{850D673D-2C71-4751-9F3E-3368EEF02153}.Release|Any CPU.Build.0 = Release|Any CPU
+		{324FA91D-4CA5-4692-9F64-FD206ABA227D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{324FA91D-4CA5-4692-9F64-FD206ABA227D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{324FA91D-4CA5-4692-9F64-FD206ABA227D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{324FA91D-4CA5-4692-9F64-FD206ABA227D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
