@@ -14,9 +14,9 @@ public class ServerNode : IServerNode
     public Dictionary<long, bool?> IdToVotedForMe { get; set; }
     public DateTime ElectionTimerStartedAt { get; set; }
     public int NextIndex { get; set; }
-    public List<LogEntry> Logs {get; set;}
-    public int CommitIndex { get; set;}
-    public Dictionary<long, int> IdToNextIndex { get; set;}
+    public List<LogEntry> Logs { get; set; }
+    public int CommitIndex { get; set; }
+    public Dictionary<long, int> IdToNextIndex { get; set; }
     public Dictionary<long, bool?> IdToLogValidationStatus { get; set; }
     public Dictionary<int, string> InternalStateMachine { get; set; }
     public int numberOfElectionsCalled = 0;
@@ -37,7 +37,7 @@ public class ServerNode : IServerNode
 
         IdToLogValidationStatus = [];
         IdToLogValidationStatus[NodeId] = null;
-                
+
         IdToNextIndex = [];
         InternalStateMachine = [];
 
@@ -62,125 +62,129 @@ public class ServerNode : IServerNode
             ElectionTimer = new System.Timers.Timer();
         }
 
-        ElectionTimer.Interval = electionTimeout == 0 ? randomValueFrom150To300 * timeoutForTimer: electionTimeout * timeoutForTimer;
+        ElectionTimer.Interval = electionTimeout == 0 ? randomValueFrom150To300 * timeoutForTimer : electionTimeout * timeoutForTimer;
         ElectionTimer.AutoReset = false;
 
         ElectionTimerStartedAt = DateTime.Now;
-        ElectionTimer.Elapsed += (sender, e) => {StartNewElection();};
+        ElectionTimer.Elapsed += (sender, e) => { StartNewElection(); };
         ElectionTimer.Start();
 
     }
 
     public async Task AppendEntriesRPC(long senderId, int senderTerm, List<LogEntry>? entries, int? entryIndex, int? highestCommittedIndex)
-{
-    if (State == ServerState.Paused) return;
-
-    IServerNode potentialLeader = IdToNode[senderId];
-
-    if (senderTerm > CurrentTerm) 
     {
-        CurrentTerm = senderTerm;
-        State = ServerState.Follower;
-        LeaderNodeId = senderId;
-        wasVoteRequestedForThisTerm = false;
+        if (State == ServerState.Paused) return;
+
+        IServerNode potentialLeader = IdToNode[senderId];
+
+        if (senderTerm > CurrentTerm)
+        {
+            CurrentTerm = senderTerm;
+            State = ServerState.Follower;
+            LeaderNodeId = senderId;
+            wasVoteRequestedForThisTerm = false;
+            ElectionTimer?.Stop();
+            StartNewElectionTimer();
+        }
+        else if (senderTerm < CurrentTerm)
+        {
+            await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex, null);
+            return;
+        }
+
         ElectionTimer?.Stop();
         StartNewElectionTimer();
-    }
-    else if (senderTerm < CurrentTerm)
-    {
-        await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex, null);
-        return;
-    }
 
-    ElectionTimer?.Stop();
-    StartNewElectionTimer();
-
-    if (highestCommittedIndex.HasValue && highestCommittedIndex > CommitIndex && highestCommittedIndex > -1 && entries != null)
-    {
-        CommitIndex = highestCommittedIndex.Value;
-
-        if(CommitIndex < entries.Count) CommitEntry(entries[CommitIndex], CommitIndex);
-    }
-
-    if (entryIndex == null || entryIndex.Value < 0)
-    {
-        await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex, null);
-        return;
-    }
-
-    if (entryIndex < Logs.Count && entries != null && Logs[entryIndex.Value].Term != entries[0].Term)
-    {
-        Logs.RemoveRange(entryIndex.Value, Logs.Count - entryIndex.Value);
-    }
-
-    foreach (var entry in entries)
-    {
-        if (entries.IndexOf(entry) >= Logs.Count)
+        if (highestCommittedIndex.HasValue && highestCommittedIndex > CommitIndex && highestCommittedIndex > -1 && entries != null)
         {
-            Logs.Add(entry);
-        }
-        else
-        {
-            Logs[entries.IndexOf(entry)] = entry;
-        }
-    }
+            CommitIndex = highestCommittedIndex.Value;
 
-    await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex, entryIndex);
-}
+            Console.WriteLine($"For {NodeId}, entries.count is {entries.Count} and CommitIndex is: {CommitIndex}");
+
+            if (CommitIndex < entries.Count) CommitEntry(entries[CommitIndex], CommitIndex);
+        }
+
+        if (entryIndex == null || entryIndex.Value < 0)
+        {
+            await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex, null);
+            return;
+        }
+
+        if (entryIndex < Logs.Count && entries != null && Logs[entryIndex.Value].Term != entries[0].Term)
+        {
+            Logs.RemoveRange(entryIndex.Value, Logs.Count - entryIndex.Value);
+        }
+
+        foreach (var entry in entries)
+        {
+            if (entries.IndexOf(entry) >= Logs.Count)
+            {
+                Logs.Add(entry);
+            }
+            else
+            {
+                Logs[entries.IndexOf(entry)] = entry;
+            }
+        }
+
+        await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex, entryIndex);
+    }
 
 
     public async Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm = 0, int? commitIndex = 0, int? ackedLogIndex = null)
-{
-    if (senderTerm > CurrentTerm)
     {
-        CurrentTerm = senderTerm.Value;
-        await TransitionToFollower();
-        return;
-    }
-
-    if (isResponseRejecting)
-    {
-        if (IdToNextIndex[senderId] > 1)
+        if (senderTerm > CurrentTerm)
         {
-            IdToNextIndex[senderId] -= 1;
+            CurrentTerm = senderTerm.Value;
+            await TransitionToFollower();
+            return;
         }
-        return;
+
+        if (isResponseRejecting)
+        {
+            if (IdToNextIndex[senderId] > 1)
+            {
+                IdToNextIndex[senderId] -= 1;
+            }
+            return;
+        }
+
+        if (!ackedLogIndex.HasValue)
+        {
+            return;
+        }
+
+        if (!IdToLogValidationStatus.ContainsKey(senderId))
+        {
+            IdToLogValidationStatus[senderId] = false;
+        }
+
+        IdToLogValidationStatus[senderId] = true;
+
+        int majorityNum = (IdToNode.Count / 2) + 1;
+        int nodesThatValidated = IdToLogValidationStatus.Count(x => x.Value == true);
+
+        if (nodesThatValidated >= majorityNum)
+        {
+            int lastLogIndex = Logs.Count > 0 ? Logs.Count - 1 : 0;
+
+            if (commitIndex.HasValue && commitIndex.Value <= lastLogIndex && commitIndex == -1 && Logs.Count > 0) CommitEntry(Logs[0], 0);
+            if (commitIndex.HasValue && commitIndex.Value <= lastLogIndex && commitIndex > -1) CommitEntry(Logs[commitIndex.Value], null);
+        }
     }
-
-    if (!ackedLogIndex.HasValue)
-    {
-        return;
-    }
-
-    if (!IdToLogValidationStatus.ContainsKey(senderId))
-    {
-        IdToLogValidationStatus[senderId] = false;
-    }
-
-    IdToLogValidationStatus[senderId] = true;
-
-    int majorityNum = (IdToNode.Count / 2) + 1;
-    int nodesThatValidated = IdToLogValidationStatus.Count(x => x.Value == true);
-
-    if (nodesThatValidated >= majorityNum)
-    {
-        int lastLogIndex = Logs.Count > 0 ? Logs.Count - 1 : 0;
-
-        if(commitIndex.HasValue && commitIndex.Value <= lastLogIndex && commitIndex == -1 && Logs.Count > 0) CommitEntry(Logs[0], 0);
-        if(commitIndex.HasValue && commitIndex.Value <= lastLogIndex && commitIndex > -1) CommitEntry(Logs[commitIndex.Value], null);
-    }
-}
 
 
     public void CommitEntry(LogEntry? entry, int? newCommitIndex)
     {
-        CommitIndex = newCommitIndex.HasValue ? newCommitIndex.Value : CommitIndex + 1; 
-        
-        if(LeaderNodeId == NodeId) SendConfirmationResponseToClient();
+        Console.WriteLine($"running for {NodeId}");
+        CommitIndex = newCommitIndex.HasValue ? newCommitIndex.Value : CommitIndex + 1;
 
-        if(entry!=null){
+        if (LeaderNodeId == NodeId) SendConfirmationResponseToClient();
 
-            string command = entry.Command.Replace(" ","");
+        if (entry != null)
+        {
+
+            string command = entry.Command.Replace(" ", "");
             int key = (int)char.GetNumericValue(command[3]);
 
             string value = command.Substring(6);
@@ -208,7 +212,7 @@ public class ServerNode : IServerNode
     {
         foreach (var idAndNode in IdToNode)
         {
-            IdToNextIndex[idAndNode.Key] = Logs.Count == 0? 0 : Logs.Count; 
+            IdToNextIndex[idAndNode.Key] = Logs.Count == 0 ? 0 : Logs.Count;
         }
 
         ElectionTimer?.Stop();
@@ -223,7 +227,7 @@ public class ServerNode : IServerNode
 
         HeartbeatTimer.Interval = 20 * timeoutForTimer;
         HeartbeatTimer.AutoReset = true;
-        HeartbeatTimer.Elapsed += async (sender, e) => { if(State == ServerState.Leader) await SendHeartBeat(); };
+        HeartbeatTimer.Elapsed += async (sender, e) => { if (State == ServerState.Leader) await SendHeartBeat(); };
         HeartbeatTimer.Start();
 
         return Task.CompletedTask;
@@ -246,11 +250,11 @@ public class ServerNode : IServerNode
     }
     public async Task SendHeartBeat()
     {
-        int mostRecentIndex = Logs.Count == 0? 0 : Logs.Count - 1;
+        int mostRecentIndex = Logs.Count == 0 ? 0 : Logs.Count - 1;
 
         foreach (var idAndNode in IdToNode)
         {
-            if(idAndNode.Value.NodeId == NodeId) continue;
+            if (idAndNode.Value.NodeId == NodeId) continue;
             await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm, Logs, mostRecentIndex, CommitIndex);
         }
     }
@@ -258,14 +262,14 @@ public class ServerNode : IServerNode
     {
         foreach (var idAndNode in IdToNode)
         {
-            if(idAndNode.Value.NodeId == NodeId) continue;
+            if (idAndNode.Value.NodeId == NodeId) continue;
             await idAndNode.Value.RequestVoteRPC(NodeId, CurrentTerm);
         }
     }
 
     public async Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
     {
-        if(!wasVoteGiven)
+        if (!wasVoteGiven)
         {
             CurrentTerm = IdToNode[serverNodeId].CurrentTerm;
             wasVoteRequestedForThisTerm = false;
@@ -292,11 +296,11 @@ public class ServerNode : IServerNode
     }
     public async Task RequestVoteRPC(long senderId, int senderTerm)
     {
-        if(State == ServerState.Paused) return;
+        if (State == ServerState.Paused) return;
 
         IServerNode nodeRequestingVote = IdToNode[senderId];
 
-        if(senderTerm < CurrentTerm || wasVoteRequestedForThisTerm) 
+        if (senderTerm < CurrentTerm || wasVoteRequestedForThisTerm)
         {
             await nodeRequestingVote.ResponseRequestVoteRPC(NodeId, false);
         }
@@ -305,7 +309,7 @@ public class ServerNode : IServerNode
             await nodeRequestingVote.ResponseRequestVoteRPC(NodeId, true);
         }
 
-        if(senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
+        if (senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
 
         return;
     }
@@ -341,7 +345,7 @@ public class ServerNode : IServerNode
 
     public bool SendCommandToLeader(LogEntry entry)
     {
-        if(NodeId != LeaderNodeId) return false;
+        if (NodeId != LeaderNodeId) return false;
         Logs.Add(entry);
         IdToLogValidationStatus[NodeId] = true;
 

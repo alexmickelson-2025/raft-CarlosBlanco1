@@ -24,7 +24,7 @@ public class UnitTest1
 
         _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, null, null);
 
-        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, Arg.Any<bool>(), follower.CurrentTerm, follower.CommitIndex);
+        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, Arg.Any<bool>(), follower.CurrentTerm, follower.CommitIndex, null);
     }
 
     //Test 18
@@ -37,7 +37,7 @@ public class UnitTest1
 
         _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, null, null);
 
-        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:true, follower.CurrentTerm, follower.CommitIndex);
+        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:true, follower.CurrentTerm, follower.CommitIndex, null);
     }
 
     //Test 7
@@ -53,7 +53,7 @@ public class UnitTest1
 
         _ = follower.AppendEntriesRPC(leader.NodeId, leader.CurrentTerm, null, null, null);
 
-        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:false, follower.CurrentTerm, follower.CommitIndex);
+        leader.Received().ResponseAppendEntriesRPC(follower.NodeId, isResponseRejecting:false, follower.CurrentTerm, follower.CommitIndex, null);
     }
 
     //Test 4 

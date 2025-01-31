@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RaftSimulator")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f011f6f6e8ade8393d668b38dab21c75e6915a71")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f1bb8c3f97dea8216b7e0bb374aa9a1305499b23")]
 [assembly: System.Reflection.AssemblyProductAttribute("RaftSimulator")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RaftSimulator")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
