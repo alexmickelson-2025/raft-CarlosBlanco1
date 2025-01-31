@@ -101,11 +101,6 @@ public class ServerSimulatioNode : IServerNode
         return ((IServerNode)_innerServerNode).SendCommandToLeader(entry);
     }
 
-    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex)
-    {
-        return ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting, senderTerm, commitIndex);
-    }
-
     public void SendConfirmationResponseToClient()
     {
         ((IServerNode)_innerServerNode).SendConfirmationResponseToClient();
@@ -114,5 +109,10 @@ public class ServerSimulatioNode : IServerNode
     public Task AppendEntriesRPC(long senderId, int senderTerm, List<LogEntry>? entries, int? entryIndex, int? highestCommitedIndex)
     {
         return ((IServerNode)_innerServerNode).AppendEntriesRPC(senderId, senderTerm, entries, entryIndex, highestCommitedIndex);
+    }
+
+    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex, int? ackedLogIndex)
+    {
+        return ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting, senderTerm, commitIndex, ackedLogIndex);
     }
 }
