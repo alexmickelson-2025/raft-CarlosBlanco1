@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RaftApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bbd37835bcef3b041c093260d7a18b1916729949")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d7dff40a33e02d29f381fcc386e1adbefe6a684a")]
 [assembly: System.Reflection.AssemblyProductAttribute("RaftApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RaftApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

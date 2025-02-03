@@ -11,7 +11,7 @@ public class ServerSimulatioNode : IServerNode
     public long LeaderNodeId { get => ((IServerNode)_innerServerNode).LeaderNodeId; set => ((IServerNode)_innerServerNode).LeaderNodeId = value; }
     public ServerState State { get => ((IServerNode)_innerServerNode).State; set => ((IServerNode)_innerServerNode).State = value; }
     public int CurrentTerm { get => ((IServerNode)_innerServerNode).CurrentTerm; set => ((IServerNode)_innerServerNode).CurrentTerm = value; }
-    public System.Timers.Timer ElectionTimer { get => ((IServerNode)_innerServerNode).ElectionTimer; set => ((IServerNode)_innerServerNode).ElectionTimer = value; }
+    public System.Timers.Timer ElectionTimer { get => ((IServerNode)_innerServerNode).ElectionTimer!; set => ((IServerNode)_innerServerNode).ElectionTimer = value; }
     public System.Timers.Timer? HeartbeatTimer { get => ((IServerNode)_innerServerNode).HeartbeatTimer; set => ((IServerNode)_innerServerNode).HeartbeatTimer = value; }
     public Dictionary<long, IServerNode> IdToNode { get => ((IServerNode)_innerServerNode).IdToNode; set => ((IServerNode)_innerServerNode).IdToNode = value; }
     public Dictionary<long, bool?> IdToVotedForMe { get => ((IServerNode)_innerServerNode).IdToVotedForMe; set => ((IServerNode)_innerServerNode).IdToVotedForMe = value; }
@@ -42,21 +42,21 @@ public class ServerSimulatioNode : IServerNode
         ((IServerNode)_innerServerNode).AddNeighbors(neighbors);
     }
 
-    public Task RequestVoteRPC(long senderId, int senderTerm)
+    public Task RequestVoteRPC(RequestVoteDTO data)
     {
         Task.Delay(NetworkRequestDelay).ContinueWith(async (_previousTask) =>
         {
-            await ((IServerNode)_innerServerNode).RequestVoteRPC(senderId, senderTerm);
+            await ((IServerNode)_innerServerNode).RequestVoteRPC(data);
         });
 
         return Task.CompletedTask;
     }
 
-    public Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
+    public Task ResponseRequestVoteRPC(ResponseRequestVoteDTO data)
     {
         Task.Delay(NetworkResponseDelay).ContinueWith(async (_previousTask) =>
         {
-            await ((IServerNode)_innerServerNode).ResponseRequestVoteRPC(serverNodeId, wasVoteGiven);
+            await ((IServerNode)_innerServerNode).ResponseRequestVoteRPC(data);
         });
 
         return Task.CompletedTask;
@@ -106,13 +106,13 @@ public class ServerSimulatioNode : IServerNode
         ((IServerNode)_innerServerNode).SendConfirmationResponseToClient();
     }
 
-    public Task AppendEntriesRPC(long senderId, int senderTerm, List<LogEntry>? entries, int? entryIndex, int? highestCommitedIndex)
+    public Task AppendEntriesRPC(AppendEntriesDTO data)
     {
-        return ((IServerNode)_innerServerNode).AppendEntriesRPC(senderId, senderTerm, entries, entryIndex, highestCommitedIndex);
+        return ((IServerNode)_innerServerNode).AppendEntriesRPC(data);
     }
 
-    public Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm, int? commitIndex, int? ackedLogIndex)
+    public Task ResponseAppendEntriesRPC(ResponseAppendEntriesDTO data)
     {
-        return ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(senderId, isResponseRejecting, senderTerm, commitIndex, ackedLogIndex);
+        return ((IServerNode)_innerServerNode).ResponseAppendEntriesRPC(data);
     }
 }

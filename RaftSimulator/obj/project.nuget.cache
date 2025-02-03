@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "kust2f4PxH6Yz88GSN++xrOmqPtn5542clBRlZxCPYcU5QXpK6B/joiTque4SVQrkx/2zVZgtEYJUSXUoh8JdA==",
+  "dgSpecHash": "yhSQM+V83LM=",
   "success": true,
   "projectFilePath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/RaftSimulator.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/Users/carlosfelipeblancocastro/.nuget/packages/microsoft.netcore.app.ref/8.0.12/microsoft.netcore.app.ref.8.0.12.nupkg.sha512",
+    "/Users/carlosfelipeblancocastro/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.12/microsoft.aspnetcore.app.ref.8.0.12.nupkg.sha512",
+    "/Users/carlosfelipeblancocastro/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.12/microsoft.netcore.app.host.osx-arm64.8.0.12.nupkg.sha512"
+  ],
   "logs": []
 }

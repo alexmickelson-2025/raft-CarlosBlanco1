@@ -23,9 +23,11 @@ public class ServerNode : IServerNode
     public bool wasVoteRequestedForThisTerm = false;
     public bool wasResponseToClientSent = false;
     public double timeoutForTimer = 1;
-    public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true)
+    public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true, long? nodeId = null)
     {
-        NodeId = DateTime.UtcNow.Ticks;
+        NodeId = nodeId ?? DateTime.UtcNow.Ticks;
+        Console.WriteLine(NodeId);
+
         State = ServerState.Follower;
         Logs = [];
 
@@ -71,95 +73,100 @@ public class ServerNode : IServerNode
 
     }
 
-    public async Task AppendEntriesRPC(long senderId, int senderTerm, List<LogEntry>? entries, int? entryIndex, int? highestCommittedIndex)
+    public async Task AppendEntriesRPC(AppendEntriesDTO data)
     {
+        Console.WriteLine($"received append entries request from node {data.senderId}");
+
         if (State == ServerState.Paused) return;
 
-        IServerNode potentialLeader = IdToNode[senderId];
+        IServerNode potentialLeader = IdToNode[data.senderId];
 
-        if (senderTerm > CurrentTerm)
+        if (data.senderTerm > CurrentTerm)
         {
-            CurrentTerm = senderTerm;
+            CurrentTerm = data.senderTerm;
             State = ServerState.Follower;
-            LeaderNodeId = senderId;
+            LeaderNodeId = data.senderId;
             wasVoteRequestedForThisTerm = false;
             ElectionTimer?.Stop();
             StartNewElectionTimer();
         }
-        else if (senderTerm < CurrentTerm)
+        else if (data.senderTerm < CurrentTerm)
         {
-            await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex, null);
+            await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO { senderId = NodeId, isResponseRejecting = true, senderTerm = CurrentTerm, commitIndex = CommitIndex, ackedLogIndex = null });
             return;
         }
 
         ElectionTimer?.Stop();
         StartNewElectionTimer();
 
-        if (highestCommittedIndex.HasValue && highestCommittedIndex > CommitIndex && highestCommittedIndex > -1 && entries != null)
+        if (data.highestCommittedIndex.HasValue && data.highestCommittedIndex > CommitIndex && data.highestCommittedIndex > -1 && data.entries != null)
         {
-            CommitIndex = highestCommittedIndex.Value;
+            CommitIndex = data.highestCommittedIndex.Value;
 
-            Console.WriteLine($"For {NodeId}, entries.count is {entries.Count} and CommitIndex is: {CommitIndex}");
+            Console.WriteLine($"For {NodeId}, entries.count is {data.entries.Count} and CommitIndex is: {CommitIndex}");
 
-            if (CommitIndex < entries.Count) CommitEntry(entries[CommitIndex], CommitIndex);
+            if (CommitIndex < data.entries.Count) CommitEntry(data.entries[CommitIndex], CommitIndex);
         }
 
-        if (entryIndex == null || entryIndex.Value < 0)
+        if (data.entryIndex == null || data.entryIndex.Value < 0)
         {
-            await potentialLeader.ResponseAppendEntriesRPC(NodeId, true, CurrentTerm, CommitIndex, null);
+            await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO { senderId = NodeId, isResponseRejecting = true, senderTerm = CurrentTerm, commitIndex = CommitIndex, ackedLogIndex = null });
             return;
         }
 
-        if (entryIndex < Logs.Count && entries != null && Logs[entryIndex.Value].Term != entries[0].Term)
+        if (data.entryIndex < Logs.Count && data.entries != null && Logs[data.entryIndex.Value].Term != data.entries[0].Term)
         {
-            Logs.RemoveRange(entryIndex.Value, Logs.Count - entryIndex.Value);
+            Logs.RemoveRange(data.entryIndex.Value, Logs.Count - data.entryIndex.Value);
         }
 
-        foreach (var entry in entries)
+        if (data.entries != null)
         {
-            if (entries.IndexOf(entry) >= Logs.Count)
+            foreach (var entry in data.entries)
             {
-                Logs.Add(entry);
-            }
-            else
-            {
-                Logs[entries.IndexOf(entry)] = entry;
+                if (data.entries.IndexOf(entry) >= Logs.Count)
+                {
+                    Logs.Add(entry);
+                }
+                else
+                {
+                    Logs[data.entries.IndexOf(entry)] = entry;
+                }
             }
         }
 
-        await potentialLeader.ResponseAppendEntriesRPC(NodeId, false, CurrentTerm, CommitIndex, entryIndex);
+        await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO { senderId = NodeId, isResponseRejecting = false, senderTerm = CurrentTerm, commitIndex = CommitIndex, ackedLogIndex = data.entryIndex });
     }
 
 
-    public async Task ResponseAppendEntriesRPC(long senderId, bool isResponseRejecting, int? senderTerm = 0, int? commitIndex = 0, int? ackedLogIndex = null)
+    public async Task ResponseAppendEntriesRPC(ResponseAppendEntriesDTO data)
     {
-        if (senderTerm > CurrentTerm)
+        if (data.senderTerm > CurrentTerm)
         {
-            CurrentTerm = senderTerm.Value;
+            CurrentTerm = data.senderTerm.Value;
             await TransitionToFollower();
             return;
         }
 
-        if (isResponseRejecting)
+        if (data.isResponseRejecting)
         {
-            if (IdToNextIndex[senderId] > 1)
+            if (IdToNextIndex[data.senderId] > 1)
             {
-                IdToNextIndex[senderId] -= 1;
+                IdToNextIndex[data.senderId] -= 1;
             }
             return;
         }
 
-        if (!ackedLogIndex.HasValue)
+        if (!data.ackedLogIndex.HasValue)
         {
             return;
         }
 
-        if (!IdToLogValidationStatus.ContainsKey(senderId))
+        if (!IdToLogValidationStatus.ContainsKey(data.senderId))
         {
-            IdToLogValidationStatus[senderId] = false;
+            IdToLogValidationStatus[data.senderId] = false;
         }
 
-        IdToLogValidationStatus[senderId] = true;
+        IdToLogValidationStatus[data.senderId] = true;
 
         int majorityNum = (IdToNode.Count / 2) + 1;
         int nodesThatValidated = IdToLogValidationStatus.Count(x => x.Value == true);
@@ -168,8 +175,8 @@ public class ServerNode : IServerNode
         {
             int lastLogIndex = Logs.Count > 0 ? Logs.Count - 1 : 0;
 
-            if (commitIndex.HasValue && commitIndex.Value <= lastLogIndex && commitIndex == -1 && Logs.Count > 0) CommitEntry(Logs[0], 0);
-            if (commitIndex.HasValue && commitIndex.Value <= lastLogIndex && commitIndex > -1) CommitEntry(Logs[commitIndex.Value], null);
+            if (data.commitIndex.HasValue && data.commitIndex.Value <= lastLogIndex && data.commitIndex == -1 && Logs.Count > 0) CommitEntry(Logs[0], 0);
+            if (data.commitIndex.HasValue && data.commitIndex.Value <= lastLogIndex && data.commitIndex > -1) CommitEntry(Logs[data.commitIndex.Value], null);
         }
     }
 
@@ -206,7 +213,6 @@ public class ServerNode : IServerNode
         }
 
         CurrentTerm += 1;
-        await TransitionToCandidate();
     }
     public Task TransitionToLeader()
     {
@@ -255,31 +261,30 @@ public class ServerNode : IServerNode
         foreach (var idAndNode in IdToNode)
         {
             if (idAndNode.Value.NodeId == NodeId) continue;
-            await idAndNode.Value.AppendEntriesRPC(NodeId, CurrentTerm, Logs, mostRecentIndex, CommitIndex);
+            await idAndNode.Value.AppendEntriesRPC(new AppendEntriesDTO { senderId = NodeId, senderTerm = CurrentTerm, entries = Logs, entryIndex = mostRecentIndex, highestCommittedIndex = CommitIndex });
         }
     }
     public async Task SendVotes()
     {
         foreach (var idAndNode in IdToNode)
         {
-            if (idAndNode.Value.NodeId == NodeId) continue;
-            await idAndNode.Value.RequestVoteRPC(NodeId, CurrentTerm);
+            if (idAndNode.Key != NodeId) await idAndNode.Value.RequestVoteRPC(new RequestVoteDTO { senderId = NodeId, senderTerm = CurrentTerm });
         }
     }
 
-    public async Task ResponseRequestVoteRPC(long serverNodeId, bool wasVoteGiven)
+    public async Task ResponseRequestVoteRPC(ResponseRequestVoteDTO data)
     {
-        if (!wasVoteGiven)
+        if (!data.wasVoteGiven)
         {
-            CurrentTerm = IdToNode[serverNodeId].CurrentTerm;
+            CurrentTerm = IdToNode[data.serverNodeId].CurrentTerm;
             wasVoteRequestedForThisTerm = false;
         }
 
         int votesNeededToWinTheElection = (IdToNode.Count / 2) + 1;
 
-        if (IdToVotedForMe.ContainsKey(serverNodeId))
+        if (IdToVotedForMe.ContainsKey(data.serverNodeId))
         {
-            IdToVotedForMe[serverNodeId] = wasVoteGiven;
+            IdToVotedForMe[data.serverNodeId] = data.wasVoteGiven;
             int notesThatveVotedForMe = IdToVotedForMe.Where(x => x.Value == true).Count();
 
             if (notesThatveVotedForMe >= votesNeededToWinTheElection)
@@ -294,22 +299,28 @@ public class ServerNode : IServerNode
 
         return;
     }
-    public async Task RequestVoteRPC(long senderId, int senderTerm)
+    public async Task RequestVoteRPC(RequestVoteDTO data)
     {
         if (State == ServerState.Paused) return;
 
-        IServerNode nodeRequestingVote = IdToNode[senderId];
-
-        if (senderTerm < CurrentTerm || wasVoteRequestedForThisTerm)
+        Console.WriteLine($" I received a vote request from {data.senderId}");
+        foreach (var kvp in IdToNode)
         {
-            await nodeRequestingVote.ResponseRequestVoteRPC(NodeId, false);
+            Console.WriteLine($" I got a neighbor with id {kvp.Key}");
+        }
+
+        IServerNode nodeRequestingVote = IdToNode[data.senderId];
+
+        if (data.senderTerm < CurrentTerm || wasVoteRequestedForThisTerm)
+        {
+            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, wasVoteGiven = false });
         }
         else
         {
-            await nodeRequestingVote.ResponseRequestVoteRPC(NodeId, true);
+            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, wasVoteGiven = true });
         }
 
-        if (senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
+        if (data.senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
 
         return;
     }

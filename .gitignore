@@ -1,5 +1,15 @@
 # Ignore build output directories
 myclasslib/bin/
 myclasslib/obj/
+
 myxunit/bin/
 myxunit/obj/
+
+RaftClient/bin
+RaftClient/obj
+
+RaftApi/bin
+RaftApi/obj
+
+RaftSimulator/bin
+RaftSimulator/obj

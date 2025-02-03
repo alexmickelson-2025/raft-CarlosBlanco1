@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "1V+WIkQCK2PszFMKkXpWi9Qm4W6K6yzm6szMiC91qHgs4/puTAy0P6zI/ity12pW305aYyWUXQPM5ewB9TaiHw==",
+  "dgSpecHash": "FxpfNOhKO7c=",
   "success": true,
-  "projectFilePath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/myclasslib.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "/app/myclasslib/myclasslib.csproj",
+  "expectedPackageFiles": [
+    "/home/developer/.nuget/packages/microsoft.netcore.app.ref/8.0.12/microsoft.netcore.app.ref.8.0.12.nupkg.sha512",
+    "/home/developer/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.12/microsoft.aspnetcore.app.ref.8.0.12.nupkg.sha512"
+  ],
   "logs": []
 }

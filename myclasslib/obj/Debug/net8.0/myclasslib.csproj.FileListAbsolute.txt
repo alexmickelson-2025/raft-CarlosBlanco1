@@ -1,3 +1,15 @@
+/app/myclasslib/bin/Debug/net8.0/myclasslib.deps.json
+/app/myclasslib/bin/Debug/net8.0/myclasslib.dll
+/app/myclasslib/bin/Debug/net8.0/myclasslib.pdb
+/app/myclasslib/obj/Debug/net8.0/myclasslib.GeneratedMSBuildEditorConfig.editorconfig
+/app/myclasslib/obj/Debug/net8.0/myclasslib.AssemblyInfoInputs.cache
+/app/myclasslib/obj/Debug/net8.0/myclasslib.AssemblyInfo.cs
+/app/myclasslib/obj/Debug/net8.0/myclasslib.csproj.CoreCompileInputs.cache
+/app/myclasslib/obj/Debug/net8.0/myclasslib.sourcelink.json
+/app/myclasslib/obj/Debug/net8.0/myclasslib.dll
+/app/myclasslib/obj/Debug/net8.0/refint/myclasslib.dll
+/app/myclasslib/obj/Debug/net8.0/myclasslib.pdb
+/app/myclasslib/obj/Debug/net8.0/ref/myclasslib.dll
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/bin/Debug/net8.0/myclasslib.deps.json
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/bin/Debug/net8.0/myclasslib.dll
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/bin/Debug/net8.0/myclasslib.pdb
@@ -5,8 +17,8 @@
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.AssemblyInfoInputs.cache
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.AssemblyInfo.cs
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.csproj.CoreCompileInputs.cache
+/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.sourcelink.json
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.dll
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/refint/myclasslib.dll
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.pdb
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/ref/myclasslib.dll
-/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/Debug/net8.0/myclasslib.sourcelink.json
