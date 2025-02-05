@@ -1080,7 +1080,10 @@
       "xunit.runner.visualstudio/2.5.3": {},
       "myclasslib/1.0.0": {
         "runtime": {
-          "myclasslib.dll": {}
+          "myclasslib.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       }
     }

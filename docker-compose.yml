@@ -72,3 +72,7 @@ services:
     volumes:
       - ./:/app
     command: dotnet watch --project RaftClient
+    depends_on: 
+      - node1
+      - node2
+      - node3

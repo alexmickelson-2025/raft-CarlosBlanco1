@@ -92,7 +92,7 @@ public class ServerNode : IServerNode
         }
         else if (data.senderTerm < CurrentTerm)
         {
-            await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO { senderId = NodeId, isResponseRejecting = true, senderTerm = CurrentTerm, commitIndex = CommitIndex, ackedLogIndex = null });
+            await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO(NodeId, true, CurrentTerm, CommitIndex, null));
             return;
         }
 
@@ -110,7 +110,7 @@ public class ServerNode : IServerNode
 
         if (data.entryIndex == null || data.entryIndex.Value < 0)
         {
-            await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO { senderId = NodeId, isResponseRejecting = true, senderTerm = CurrentTerm, commitIndex = CommitIndex, ackedLogIndex = null });
+            await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO (NodeId, true, CurrentTerm, CommitIndex, null ));
             return;
         }
 
@@ -134,7 +134,7 @@ public class ServerNode : IServerNode
             }
         }
 
-        await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO { senderId = NodeId, isResponseRejecting = false, senderTerm = CurrentTerm, commitIndex = CommitIndex, ackedLogIndex = data.entryIndex });
+        await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO ( NodeId, false, CurrentTerm, CommitIndex, data.entryIndex ));
     }
 
 
@@ -261,7 +261,7 @@ public class ServerNode : IServerNode
         foreach (var idAndNode in IdToNode)
         {
             if (idAndNode.Value.NodeId == NodeId) continue;
-            await idAndNode.Value.AppendEntriesRPC(new AppendEntriesDTO { senderId = NodeId, senderTerm = CurrentTerm, entries = Logs, entryIndex = mostRecentIndex, highestCommittedIndex = CommitIndex });
+            await idAndNode.Value.AppendEntriesRPC(new AppendEntriesDTO (NodeId, CurrentTerm, Logs, mostRecentIndex, CommitIndex ));
         }
     }
     public async Task SendVotes()
