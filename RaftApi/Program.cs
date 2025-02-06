@@ -30,12 +30,13 @@ app.MapGet("/nodeData", () =>
 {
   return new NodeDataDTO{
     Id= node.NodeId.ToString(),
-    Status= node.State.ToString(),
+    State= node.State.ToString(),
     ElectionTimeout= node.ElectionTimer == null? 0 : (int)node.ElectionTimer.Interval,
     Term= node.CurrentTerm,
     CurrentTermLeader= node.LeaderNodeId.ToString(),
     CommittedEntryIndex= node.CommitIndex,
-    Logs= node.Logs
+    Logs= node.Logs,
+    ElectionStartedAt = node.ElectionTimerStartedAt
     // NodeIntervalScalar= RaftNode.NodeIntervalScalar
   };
 });
