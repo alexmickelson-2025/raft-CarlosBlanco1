@@ -7,3 +7,10 @@ RaftSimulator/
 # Exclude the bin and obj directories inside RaftApi
 RaftApi/bin/
 RaftApi/obj/
+
+bin/
+obj/
+dev-slow.Dockerfile
+docker-compose.yml
+.gitignore
+README.md
