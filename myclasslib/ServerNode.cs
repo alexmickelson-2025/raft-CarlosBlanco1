@@ -25,7 +25,7 @@ public class ServerNode : IServerNode
     public double timeoutForTimer = 1;
     public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true, long? nodeId = null)
     {
-        NodeId = nodeId ?? DateTime.UtcNow.Ticks;
+        NodeId = nodeId.HasValue ? nodeId.Value : DateTime.UtcNow.Ticks;
         Console.WriteLine(NodeId);
 
         State = ServerState.Follower;
@@ -318,7 +318,10 @@ public class ServerNode : IServerNode
     {
         foreach (var idAndNode in IdToNode)
         {
-            if (idAndNode.Key != NodeId) await idAndNode.Value.RequestVoteRPC(new RequestVoteDTO { senderId = NodeId, senderTerm = CurrentTerm });
+            if (idAndNode.Key != NodeId) 
+            {
+                await idAndNode.Value.RequestVoteRPC(new RequestVoteDTO { senderId = NodeId, senderTerm = CurrentTerm });
+            }
         }
     }
 
@@ -332,10 +335,12 @@ public class ServerNode : IServerNode
 
         int votesNeededToWinTheElection = (IdToNode.Count / 2) + 1;
 
+
         if (IdToVotedForMe.ContainsKey(data.serverNodeId))
         {
             IdToVotedForMe[data.serverNodeId] = data.wasVoteGiven;
             int notesThatveVotedForMe = IdToVotedForMe.Where(x => x.Value == true).Count();
+            Console.WriteLine($"I need {votesNeededToWinTheElection} and I got {notesThatveVotedForMe}");
 
             if (notesThatveVotedForMe >= votesNeededToWinTheElection)
             {
@@ -354,6 +359,19 @@ public class ServerNode : IServerNode
         if (State == ServerState.Paused) return;
 
         Console.WriteLine($" I received a vote request from {data.senderId}");
+
+        if (data.senderId == NodeId)
+        {
+            Console.WriteLine($"Node {NodeId}: I got an append entries from myself");
+            return;
+        }
+
+        if (!IdToNode.ContainsKey(data.senderId))
+        {
+            Console.WriteLine($"Node {NodeId}: I got a request from an unknown node with id: {data.senderId}");
+            return;
+        }
+        
         foreach (var kvp in IdToNode)
         {
             Console.WriteLine($" I got a neighbor with id {kvp.Key}");

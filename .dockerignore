@@ -1,0 +1,9 @@
+# Exclude the entire myxunit folder
+myxunit/
+
+# Exclude the entire RaftSimulator folder
+RaftSimulator/
+
+# Exclude the bin and obj directories inside RaftApi
+RaftApi/bin/
+RaftApi/obj/

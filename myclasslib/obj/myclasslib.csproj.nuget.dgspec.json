@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/myclasslib.csproj": {}
+    "/app/myclasslib/myclasslib.csproj": {}
   },
   "projects": {
-    "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/myclasslib.csproj": {
+    "/app/myclasslib/myclasslib.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/myclasslib.csproj",
+        "projectUniqueName": "/app/myclasslib/myclasslib.csproj",
         "projectName": "myclasslib",
-        "projectPath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/myclasslib.csproj",
-        "packagesPath": "/Users/carlosfelipeblancocastro/.nuget/packages/",
-        "outputPath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/obj/",
+        "projectPath": "/app/myclasslib/myclasslib.csproj",
+        "packagesPath": "/home/developer/.nuget/packages/",
+        "outputPath": "/app/myclasslib/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/carlosfelipeblancocastro/.nuget/NuGet/NuGet.Config"
+          "/home/developer/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -70,7 +69,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.102/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.102/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
