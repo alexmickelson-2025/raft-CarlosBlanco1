@@ -20,7 +20,7 @@ var node = new ServerNode(otherNodes, nodeId: (long) int.Parse(nodeId));
  
 // ServerNode.NodeIntervalScalar = double.Parse(nodeIntervalScalarRaw);
   
-// node.StartTheThing();
+node.StartTheThing();
 
 app.MapGet("/health", () => "healthy");
 

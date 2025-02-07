@@ -2,7 +2,7 @@
   "Files": [
     {
       "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/obj/Debug/net8.0/scopedcss/projectbundle/RaftSimulator.bundle.scp.css",
-      "PackagePath": "staticwebassets/RaftSimulator.bundle.scp.css"
+      "PackagePath": "staticwebassets/RaftSimulator.v5k2s6i78k.bundle.scp.css"
     },
     {
       "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/wwwroot/app.css",
@@ -19,6 +19,10 @@
     {
       "Id": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/wwwroot/favicon.png",
       "PackagePath": "staticwebassets/favicon.png"
+    },
+    {
+      "Id": "obj/Debug/net8.0/staticwebassets/msbuild.RaftSimulator.Microsoft.AspNetCore.StaticWebAssetEndpoints.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssetEndpoints.props"
     },
     {
       "Id": "obj/Debug/net8.0/staticwebassets/msbuild.RaftSimulator.Microsoft.AspNetCore.StaticWebAssets.props",

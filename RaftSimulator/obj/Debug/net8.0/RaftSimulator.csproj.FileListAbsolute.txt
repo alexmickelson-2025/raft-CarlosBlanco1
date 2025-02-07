@@ -32,3 +32,6 @@
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/obj/Debug/net8.0/RaftSimulator.pdb
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/obj/Debug/net8.0/RaftSimulator.genruntimeconfig.cache
 /Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/obj/Debug/net8.0/ref/RaftSimulator.dll
+/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/bin/Debug/net8.0/RaftSimulator.staticwebassets.endpoints.json
+/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/obj/Debug/net8.0/staticwebassets.build.endpoints.json
+/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftSimulator/obj/Debug/net8.0/staticwebassets/msbuild.RaftSimulator.Microsoft.AspNetCore.StaticWebAssetEndpoints.props
