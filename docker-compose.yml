@@ -46,12 +46,8 @@ services:
     build:
       context: .
       dockerfile: dev-slow.Dockerfile
-    working_dir: /app
-    user: 1000:100
     environment:
       - NODE_URLS=http://node1:8080,http://node2:8080,http://node3:8080
     ports:
       - 5015:5015
-    volumes:
-      - ./:/app
     command: dotnet watch --project RaftClient
