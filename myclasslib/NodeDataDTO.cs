@@ -9,6 +9,7 @@ public record NodeDataDTO{
     public string? CurrentTermLeader { get; set; }
     public int CommittedEntryIndex { get; set; }
     public List<LogEntry> Logs { get; set; } = new();
+    public Dictionary<int, string> InternalStateMachine { get; set; } = new();
     public string State { get; set; }
     public double NodeIntervalScalar { get; set; }
 

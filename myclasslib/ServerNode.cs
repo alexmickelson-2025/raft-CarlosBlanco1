@@ -194,9 +194,13 @@ public class ServerNode : IServerNode
     {
         if (newCommitIndex < 0) return;
 
+        Console.WriteLine($"I'm node {NodeId} and I just got a commit index of {newCommitIndex}");
+
         CommitIndex = newCommitIndex > CommitIndex ? newCommitIndex : CommitIndex;
 
-        List<LogEntry> entriesToCommit = Logs.GetRange(0, Math.Min(CommitIndex, Logs.Count));
+        List<LogEntry> entriesToCommit = Logs.GetRange(0, Math.Max(CommitIndex, Logs.Count));
+
+        Console.WriteLine($"I need to commit {entriesToCommit.Count} entries in my internal state machine!");
 
         foreach (var entry in entriesToCommit)
         {
@@ -204,6 +208,7 @@ public class ServerNode : IServerNode
             int key = (int)char.GetNumericValue(command[3]);
 
             string value = command.Substring(6);
+            Console.WriteLine($"Commiting entry with key {key} and value {value}");
 
             InternalStateMachine[key] = value;
         }
@@ -239,7 +244,7 @@ public class ServerNode : IServerNode
             }
         }
 
-        ElectionTimer?.Stop();
+        if(ElectionTimer != null) ElectionTimer?.Stop();
 
         State = ServerState.Leader;
         LeaderNodeId = NodeId;
@@ -258,7 +263,7 @@ public class ServerNode : IServerNode
     }
     public async Task TransitionToCandidate()
     {
-        ElectionTimer?.Stop();
+        if(ElectionTimer != null) ElectionTimer?.Stop();
 
         State = ServerState.Candidate;
 
@@ -280,7 +285,7 @@ public class ServerNode : IServerNode
             {
                 if (idAndNode.Value.NodeId != NodeId)
                 {
-                    int previousLogIndexForNode = IdToNextIndex[idAndNode.Key] == -1 ? 0 : IdToNextIndex[idAndNode.Key];
+                    int previousLogIndexForNode = IdToNextIndex[idAndNode.Key] < 0 ? 0 : IdToNextIndex[idAndNode.Key];
                     int previousLogTermForNode = Logs[previousLogIndexForNode].Term;
                     List<LogEntry> entriesForNode = Logs.GetRange(previousLogIndexForNode, Logs.Count - previousLogIndexForNode);
                     await idAndNode.Value.AppendEntriesRPC(new AppendEntriesDTO(NodeId, CurrentTerm, CommitIndex, entriesForNode, previousLogIndexForNode, previousLogTermForNode));

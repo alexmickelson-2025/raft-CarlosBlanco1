@@ -134,7 +134,7 @@
 
     private void SendCommand(ServerSimulatioNode node)
     {
-        bool result = node.SendCommandToLeader(new LogEntry(_term: node.CurrentTerm, _command: $"SET {Key} -> {Value}"));
+        bool result = node.SendCommandToLeader(new LogEntry(Term: node.CurrentTerm, Command: $"SET {Key} -> {Value}"));
         SuccessStates[node] = result;
         StateHasChanged();
     }

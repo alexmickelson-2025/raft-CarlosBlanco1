@@ -75,6 +75,14 @@
                     <div>Commit Index: @kvp.Value.CommittedEntryIndex</div>
                 </div>
                 <div>
+                    <p>INTERNAL STATE MACHINE:</p>
+                    @foreach (var command in kvp.Value.InternalStateMachine)
+                    {
+                        <div>Key: @command.Key</div>
+                        <div>Value: @command.Value</div>
+                    }
+                </div>
+                <div>
                     <p>LOGS</p>
                     <div>
                         @for (int i = 0; i < kvp.Value.Logs.Count; i++)
@@ -140,12 +148,20 @@ Welcome to your new app.
         }, null, 0, 200);
     }
 
-    private void SendCommand(string url, int nodeTerm)
+    private async Task SendCommand(string url, int nodeTerm)
     {
-        Console.WriteLine($"url to send to will be {url}/request/command, term will be {nodeTerm} and command will be SET {Key} -> {Value}");
         LogEntry logEntry = new LogEntry(Term: nodeTerm, Command: $"SET {Key} -> {Value}");
-        var result = client.PostAsJsonAsync(url + "/request/command", logEntry);
-        SuccessStates[url] = result.IsCompletedSuccessfully;
+        var response = await client.PostAsJsonAsync(url + "/request/command", logEntry);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var message = await response.Content.ReadAsStringAsync();
+            SuccessStates[url] = true;
+        }
+        else
+        {
+            SuccessStates[url] = false;
+        }
         StateHasChanged();
     }
 
