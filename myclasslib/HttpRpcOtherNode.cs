@@ -2,7 +2,6 @@ using System.Net.Http.Json;
 using myclasslib;
 public class HttpRpcOtherNode : IServerNode
 {
-  public int Id { get; }
   public string Url { get; }
   public long NodeId { get; set; }
   public long LeaderNodeId { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -25,14 +24,12 @@ public class HttpRpcOtherNode : IServerNode
   {
     NodeId = id;
     Url = url;
-    Console.WriteLine($"Created with url: {Url} and id {id}");
   }
 
   public async Task AppendEntriesRPC(AppendEntriesDTO data)
   {
     try
     {
-      Console.WriteLine($"received append entries request from node {data.senderId}");
       await client.PostAsJsonAsync(Url + "/request/appendEntries", data);
     }
     catch (HttpRequestException)
@@ -43,8 +40,6 @@ public class HttpRpcOtherNode : IServerNode
 
   public async Task ResponseAppendEntriesRPC(ResponseAppendEntriesDTO data)
   {
-    Console.WriteLine("ran response append entries rpc");
-
     try
     {
       await client.PostAsJsonAsync(Url + "/response/appendEntries", data);
@@ -57,22 +52,18 @@ public class HttpRpcOtherNode : IServerNode
 
   public async Task RequestVoteRPC(RequestVoteDTO data)
   {
-    Console.WriteLine($"received request vote rpc from node {data.senderId} and I'm {NodeId}");
     try
     {
-      Console.WriteLine($"Vote sent to : {Url}/request/vote");
       await client.PostAsJsonAsync(Url + "/request/vote", data);
     }
     catch (HttpRequestException e)
     {
-      Console.WriteLine($"Error sending request to {Url}: {e.Message}");
       Console.WriteLine($"node {Url} is down");
     }
   }
 
   public async Task ResponseRequestVoteRPC(ResponseRequestVoteDTO data)
   {
-    Console.WriteLine("ran response request vote rpc");
     try
     {
       await client.PostAsJsonAsync(Url + "/response/vote", data);

@@ -478,32 +478,33 @@
     ]
   },
   "packageFolders": {
-    "/home/developer/.nuget/packages/": {}
+    "/Users/carlosfelipeblancocastro/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/app/RaftApi/RaftApi.csproj",
+      "projectUniqueName": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftApi/RaftApi.csproj",
       "projectName": "RaftApi",
-      "projectPath": "/app/RaftApi/RaftApi.csproj",
-      "packagesPath": "/home/developer/.nuget/packages/",
-      "outputPath": "/app/RaftApi/obj/",
+      "projectPath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftApi/RaftApi.csproj",
+      "packagesPath": "/Users/carlosfelipeblancocastro/.nuget/packages/",
+      "outputPath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/RaftApi/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/home/developer/.nuget/NuGet/NuGet.Config"
+        "/Users/carlosfelipeblancocastro/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
+        "/usr/local/share/dotnet/library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "/app/myclasslib/myclasslib.csproj": {
-              "projectPath": "/app/myclasslib/myclasslib.csproj"
+            "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/myclasslib.csproj": {
+              "projectPath": "/Users/carlosfelipeblancocastro/Desktop/raft-CarlosBlanco1/myclasslib/myclasslib.csproj"
             }
           }
         }
@@ -552,7 +553,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/9.0.102/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.102/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

@@ -26,7 +26,6 @@ public class ServerNode : IServerNode
     public ServerNode(List<IServerNode> neighbors, int startTerm = 1, int electionTimeout = 0, bool startElectionTimer = true, long? nodeId = null)
     {
         NodeId = nodeId.HasValue ? nodeId.Value : DateTime.UtcNow.Ticks;
-        Console.WriteLine(NodeId);
 
         State = ServerState.Follower;
         Logs = [];
@@ -76,23 +75,19 @@ public class ServerNode : IServerNode
 
     public async Task AppendEntriesRPC(AppendEntriesDTO data)
     {
-        Console.WriteLine($"Node {NodeId}: AppendEntriesRPC started.");
 
         if (State == ServerState.Paused)
         {
-            Console.WriteLine($"Node {NodeId}: Server is paused. Exiting.");
             return;
         }
 
         if (data.senderId == NodeId)
         {
-            Console.WriteLine($"Node {NodeId}: I got an append entries from myself");
             return;
         }
 
         if (!IdToNode.ContainsKey(data.senderId))
         {
-            Console.WriteLine($"Node {NodeId}: I got a request from an unknown node with id: {data.senderId}");
             return;
         }
 
@@ -100,8 +95,6 @@ public class ServerNode : IServerNode
 
         if (data.senderTerm >= CurrentTerm)
         {
-            Console.WriteLine($"Node {NodeId}: Received valid append entries from node {data.senderId} with term {data.senderTerm}. Updating current term to {data.senderTerm}.");
-
             CurrentTerm = data.senderTerm;
             State = ServerState.Follower;
             LeaderNodeId = data.senderId;
@@ -111,11 +104,8 @@ public class ServerNode : IServerNode
 
             if (data.newEntries != null)
             {
-                Console.WriteLine($"Node {NodeId}: I got {data.newEntries.Count} logs from the leader!");
-
                 if (Logs.Count == 0)
                 {
-                    Console.WriteLine($"Node {NodeId}: Logs are empty. Appending new logs from the leader.");
                     Logs.AddRange(data.newEntries);
                     await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO(NodeId, false, CurrentTerm, CommitIndex, data.prevLogIndex));
                     CommitEntry(data.highestCommittedIndex);
@@ -125,7 +115,6 @@ public class ServerNode : IServerNode
                     LogEntry entryForThisNode = Logs[data.prevLogIndex.Value];
                     if (entryForThisNode.Term == data.prevLogTerm)
                     {
-                        Console.WriteLine($"Node {NodeId}: Log at prevLogIndex {data.prevLogIndex} matches the term. Replacing logs after prevLogIndex with the leader's logs.");
                         Logs.RemoveRange(data.prevLogIndex.Value, Logs.Count - data.prevLogIndex.Value);
                         Logs.AddRange(data.newEntries);
 
@@ -134,19 +123,16 @@ public class ServerNode : IServerNode
                     }
                     else
                     {
-                        Console.WriteLine($"Node {NodeId}: Log at prevLogIndex {data.prevLogIndex} does not match the term. Rejecting append.");
                         await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO(NodeId, true, CurrentTerm, CommitIndex, data.prevLogIndex));
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"Node {NodeId}: prevLogIndex {data.prevLogIndex} is too far ahead. Rejecting append.");
                     await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO(NodeId, true, CurrentTerm, CommitIndex, data.prevLogIndex));
                 }
             }
             else
             {
-                Console.WriteLine($"Node {NodeId}: Data entries were empty! Leader did not send any new entries.");
                 // Doesn't reject if the leader didn't send any new entries
                 await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO(NodeId, false, CurrentTerm, CommitIndex, data.prevLogIndex));
                 CommitEntry(data.highestCommittedIndex);
@@ -154,11 +140,8 @@ public class ServerNode : IServerNode
         }
         else
         {
-            Console.WriteLine($"Node {NodeId}: Received append entries from a node with an outdated term. Rejecting.");
             await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO(NodeId, true, CurrentTerm, CommitIndex, null));
         }
-
-        Console.WriteLine($"Node {NodeId}: AppendEntriesRPC completed.");
     }
 
 
@@ -213,7 +196,6 @@ public class ServerNode : IServerNode
 
         CommitIndex = newCommitIndex > CommitIndex ? newCommitIndex : CommitIndex;
 
-        Console.WriteLine($"Logs count: {Logs.Count}, Commit Index: {CommitIndex}");
         List<LogEntry> entriesToCommit = Logs.GetRange(0, Math.Min(CommitIndex, Logs.Count));
 
         foreach (var entry in entriesToCommit)
@@ -247,7 +229,14 @@ public class ServerNode : IServerNode
     {
         foreach (var idAndNode in IdToNode)
         {
-            IdToNextIndex[idAndNode.Key] = -1;
+            if (IdToNextIndex.ContainsKey(idAndNode.Key))
+            {
+                IdToNextIndex[idAndNode.Key] = -1;
+            }
+            else
+            {
+                IdToNextIndex.Add(idAndNode.Key, -1);
+            }
         }
 
         ElectionTimer?.Stop();
@@ -289,7 +278,6 @@ public class ServerNode : IServerNode
         {
             foreach (var idAndNode in IdToNode)
             {
-                Console.WriteLine($"I am the leader, logs count is: {Logs.Count} and commit index is {CommitIndex}");
                 if (idAndNode.Value.NodeId != NodeId)
                 {
                     int previousLogIndexForNode = IdToNextIndex[idAndNode.Key] == -1 ? 0 : IdToNextIndex[idAndNode.Key];
@@ -304,7 +292,6 @@ public class ServerNode : IServerNode
         {
             foreach (var idAndNode in IdToNode)
             {
-                Console.WriteLine($"I am the leader, logs count is: {Logs.Count} and commit index is {CommitIndex}");
                 if (idAndNode.Value.NodeId != NodeId)
                 {
                     //If all logs are already commited, send empty appendentriesRPC
@@ -329,7 +316,7 @@ public class ServerNode : IServerNode
     {
         if (!data.wasVoteGiven)
         {
-            CurrentTerm = IdToNode[data.serverNodeId].CurrentTerm;
+            CurrentTerm = data.serverNodeTerm;
             wasVoteRequestedForThisTerm = false;
         }
 
@@ -340,7 +327,6 @@ public class ServerNode : IServerNode
         {
             IdToVotedForMe[data.serverNodeId] = data.wasVoteGiven;
             int notesThatveVotedForMe = IdToVotedForMe.Where(x => x.Value == true).Count();
-            Console.WriteLine($"I need {votesNeededToWinTheElection} and I got {notesThatveVotedForMe}");
 
             if (notesThatveVotedForMe >= votesNeededToWinTheElection)
             {
@@ -358,34 +344,25 @@ public class ServerNode : IServerNode
     {
         if (State == ServerState.Paused) return;
 
-        Console.WriteLine($" I received a vote request from {data.senderId}");
-
         if (data.senderId == NodeId)
         {
-            Console.WriteLine($"Node {NodeId}: I got an append entries from myself");
             return;
         }
 
         if (!IdToNode.ContainsKey(data.senderId))
         {
-            Console.WriteLine($"Node {NodeId}: I got a request from an unknown node with id: {data.senderId}");
             return;
-        }
-        
-        foreach (var kvp in IdToNode)
-        {
-            Console.WriteLine($" I got a neighbor with id {kvp.Key}");
         }
 
         IServerNode nodeRequestingVote = IdToNode[data.senderId];
 
         if (data.senderTerm < CurrentTerm || wasVoteRequestedForThisTerm)
         {
-            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, wasVoteGiven = false });
+            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, serverNodeTerm = CurrentTerm, wasVoteGiven = false });
         }
         else
         {
-            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, wasVoteGiven = true });
+            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, serverNodeTerm = CurrentTerm, wasVoteGiven = true });
         }
 
         if (data.senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;

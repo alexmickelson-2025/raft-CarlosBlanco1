@@ -16,12 +16,10 @@ List<IServerNode> otherNodes = otherNodesRaw
   .Select(s => new HttpRpcOtherNode(int.Parse(s.Split(",")[0]), s.Split(",")[1]))
   .ToList<IServerNode>(); 
  
-var node = new ServerNode([], nodeId: (long) int.Parse(nodeId));
- 
+var node = new ServerNode([], nodeId: (long) int.Parse(nodeId)); 
 // ServerNode.NodeIntervalScalar = double.Parse(nodeIntervalScalarRaw);
   
 node.AddNeighbors(otherNodes);
-node.StartTheThing();
 
 app.MapGet("/health", () => "healthy");
 
@@ -49,7 +47,6 @@ app.MapPost("/request/appendEntries", async (AppendEntriesDTO request) =>
  
 app.MapPost("/request/vote", async (RequestVoteDTO request) =>
 {
-  Console.WriteLine($"received vode request in API from {request.senderId}");
   await node.RequestVoteRPC(request);
 });
  
@@ -65,8 +62,11 @@ app.MapPost("/response/vote", async (ResponseRequestVoteDTO response) =>
  
 app.MapPost("/request/command", (LogEntry data) =>
 {
+  Console.WriteLine($"I'm node {nodeId} and I received a log with term {data.Term} and command {data.Command}");
   node.SendCommandToLeader(data);
 });
+
+app.MapGet("/start",() => node.StartTheThing());
  
 app.Run();
 

@@ -8,10 +8,14 @@
 
 <h1>Hello, world!</h1>
 
-@foreach(var url in Urls)
+@foreach (var url in Urls)
 {
     <div>@url</div>
 }
+
+<div>
+    <button class="btn btn-primary" @onclick="StartNodes">Start Simulation</button>
+</div>
 
 <div class="d-flex gap-5">
     @foreach (var kvp in data)
@@ -20,13 +24,13 @@
         var maxIntervalMilliseconds = 300 * ServerSimulatioNode.IntervalScaleValue;
         var percentageRemaining = (int)(100 * (Math.Abs(timeoutRemaining.TotalMilliseconds) / maxIntervalMilliseconds));
         bool? SucessState = null;
-        var nodeId = kvp.Value.Id; 
+        var nodeId = kvp.Value.Id;
         string urlToSendCommandTo = $"http://node{nodeId}:8080";
 
         <div class="d-flex flex-column gap-2">
             <div>
                 <p>Create New Command</p>
-                    <form @onsubmit="() => SendCommand(urlToSendCommandTo, kvp.Value.Term)">
+                <form @onsubmit="() => SendCommand(urlToSendCommandTo, kvp.Value.Term)">
                     <label>
                         Key
                         <input type="text" @bind="Key">
@@ -59,11 +63,11 @@
                 <p>Election Interval: @kvp.Value.ElectionTimeout</p>
                 <p>Current Term: @kvp.Value.Term</p>
                 <p>Leader is @kvp.Value.CurrentTermLeader</p>
-    using myclasslib;
+                using myclasslib;
                 <div class="progress" role="progressbar" aria-label="Basic example"
                     aria-valuenow=@(Math.Abs(timeoutRemaining.TotalMilliseconds)) aria-valuemin="0"
                     aria-valuemax="@(maxIntervalMilliseconds)">
-    using System.Text.Json;
+                    using System.Text.Json;
                     <div class="progress-bar bg-dark-subtle" style="width: @percentageRemaining%;">@percentageRemaining
                     </div>
                 </div>
@@ -99,7 +103,7 @@
 
 Welcome to your new app.
 
-@code{
+@code {
     string[] Urls = Environment.GetEnvironmentVariable("NODE_URLS").Split(',');
     HttpClient client = new();
     ConcurrentDictionary<string, NodeDataDTO> data = new();
@@ -109,38 +113,47 @@ Welcome to your new app.
     private Dictionary<string, bool?> SuccessStates = new();
     protected override void OnInitialized()
     {
-        timer= new Timer(async _ =>
+        timer = new Timer(async _ =>
         {
             await Task.WhenAll(Urls.Select(async url =>
+    {
+            try
             {
-                try
-                {
                 var nodeData = await client.GetFromJsonAsync<NodeDataDTO>(url + "/nodeData");
-                if(nodeData != null)
+                if (nodeData != null)
                 {
                     data[url] = nodeData;
-                } 
+                }
                 else
                 {
                     Console.WriteLine("Couldn't get data for" + url);
 
                 }
-                }
-                catch(HttpRequestException)
-                {
-                    Console.WriteLine("kvp.Value" + url + "is down");
-                }
-                await InvokeAsync(StateHasChanged);
             }
-            ));
+            catch (HttpRequestException)
+            {
+                Console.WriteLine("kvp.Value" + url + "is down");
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+    ));
         }, null, 0, 200);
     }
 
     private void SendCommand(string url, int nodeTerm)
     {
-        LogEntry logEntry = new LogEntry(_term: nodeTerm, _command: $"SET {Key} -> {Value}");
-        var result = client.PostAsJsonAsync(url + "/request/command", JsonSerializer.Serialize(logEntry));
+        Console.WriteLine($"url to send to will be {url}/request/command, term will be {nodeTerm} and command will be SET {Key} -> {Value}");
+        LogEntry logEntry = new LogEntry(Term: nodeTerm, Command: $"SET {Key} -> {Value}");
+        var result = client.PostAsJsonAsync(url + "/request/command", logEntry);
         SuccessStates[url] = result.IsCompletedSuccessfully;
         StateHasChanged();
+    }
+
+    private async Task StartNodes()
+    {
+        await Task.WhenAll(Urls.Select(async url =>
+        {
+            await client.GetAsync(url + "/start");
+        }));
     }
 }

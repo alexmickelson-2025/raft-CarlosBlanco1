@@ -3,9 +3,13 @@ public class LogEntry
 {
     public int Term {get; set;}
     public string Command {get; set;}
-    public LogEntry(int _term = 0, string _command = "SET")
+    public LogEntry()
     {
-        Term = _term;
-        Command = _command;
+        
+    }
+    public LogEntry(int Term = 0, string Command = "SET")
+    {
+        this.Term = Term;
+        this.Command = Command;
     }
 }

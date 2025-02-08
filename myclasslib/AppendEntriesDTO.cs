@@ -2,19 +2,21 @@ using myclasslib;
 
 public record AppendEntriesDTO
 {
-    public long senderId;
-    public int senderTerm; 
-    public int highestCommittedIndex;
-    public List<LogEntry>? newEntries; 
-    public int? prevLogIndex; 
-    public int? prevLogTerm;
-    public AppendEntriesDTO(long _senderId, int _senderTerm,int _highestCommitedIndex, List<LogEntry>? _entries = null, int? _prevLogIndex = null, int? _prevLogTerm = null)
+    public long senderId { get; set; }
+    public int senderTerm { get; set; }
+    public int highestCommittedIndex { get; set; }
+    public List<LogEntry>? newEntries { get; set; }
+    public int? prevLogIndex { get; set; }
+    public int? prevLogTerm { get; set; }
+
+    public AppendEntriesDTO(long senderId, int senderTerm, int highestCommittedIndex, 
+                            List<LogEntry>? newEntries = null, int? prevLogIndex = null, int? prevLogTerm = null)
     {
-        senderId = _senderId;
-        senderTerm = _senderTerm;
-        newEntries = _entries;
-        prevLogIndex = _prevLogIndex;
-        prevLogTerm = _prevLogTerm;
-        highestCommittedIndex = _highestCommitedIndex; 
+        this.senderId = senderId;
+        this.senderTerm = senderTerm;
+        this.highestCommittedIndex = highestCommittedIndex;
+        this.newEntries = newEntries;
+        this.prevLogIndex = prevLogIndex;
+        this.prevLogTerm = prevLogTerm;
     }
 }

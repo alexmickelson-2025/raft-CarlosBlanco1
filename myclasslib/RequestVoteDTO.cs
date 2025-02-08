@@ -1,4 +1,5 @@
 public record RequestVoteDTO {
-    public long senderId; 
-    public int senderTerm;
+    public long senderId {get; set;} 
+    public int senderTerm {get; set;}
+    
 }
