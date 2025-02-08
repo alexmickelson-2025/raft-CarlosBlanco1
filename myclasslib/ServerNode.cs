@@ -219,6 +219,7 @@ public class ServerNode : IServerNode
     public async void StartNewElection()
     {
         numberOfElectionsCalled += 1;
+        CurrentTerm += 1;
 
         await TransitionToCandidate();
 
@@ -228,7 +229,6 @@ public class ServerNode : IServerNode
             return;
         }
 
-        CurrentTerm += 1;
     }
     public Task TransitionToLeader()
     {
@@ -312,7 +312,7 @@ public class ServerNode : IServerNode
         {
             if (idAndNode.Key != NodeId) 
             {
-                await idAndNode.Value.RequestVoteRPC(new RequestVoteDTO { senderId = NodeId, senderTerm = CurrentTerm });
+                await idAndNode.Value.RequestVoteRPC(new RequestVoteDTO ( NodeId, CurrentTerm ));
             }
         }
     }
@@ -363,11 +363,11 @@ public class ServerNode : IServerNode
 
         if (data.senderTerm < CurrentTerm || wasVoteRequestedForThisTerm)
         {
-            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, serverNodeTerm = CurrentTerm, wasVoteGiven = false });
+            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO ( NodeId, CurrentTerm, false ));
         }
         else
         {
-            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO { serverNodeId = NodeId, serverNodeTerm = CurrentTerm, wasVoteGiven = true });
+            await nodeRequestingVote.ResponseRequestVoteRPC(new ResponseRequestVoteDTO ( NodeId, CurrentTerm, true ));
         }
 
         if (data.senderTerm == CurrentTerm) wasVoteRequestedForThisTerm = true;
