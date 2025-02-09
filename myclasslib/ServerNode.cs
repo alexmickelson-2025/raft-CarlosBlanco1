@@ -91,7 +91,14 @@ public class ServerNode : IServerNode
             return;
         }
 
+
         IServerNode potentialLeader = IdToNode[data.senderId];
+
+        if(data.prevLogIndex > Logs.Count)
+        {
+            await potentialLeader.ResponseAppendEntriesRPC(new ResponseAppendEntriesDTO(NodeId, true, CurrentTerm, CommitIndex, null));
+            return;
+        }
 
         if (data.senderTerm >= CurrentTerm)
         {
@@ -194,13 +201,9 @@ public class ServerNode : IServerNode
     {
         if (newCommitIndex < 0) return;
 
-        Console.WriteLine($"I'm node {NodeId} and I just got a commit index of {newCommitIndex}");
-
         CommitIndex = newCommitIndex > CommitIndex ? newCommitIndex : CommitIndex;
 
         List<LogEntry> entriesToCommit = Logs.GetRange(0, Math.Max(CommitIndex, Logs.Count));
-
-        Console.WriteLine($"I need to commit {entriesToCommit.Count} entries in my internal state machine!");
 
         foreach (var entry in entriesToCommit)
         {
@@ -208,7 +211,6 @@ public class ServerNode : IServerNode
             int key = (int)char.GetNumericValue(command[3]);
 
             string value = command.Substring(6);
-            Console.WriteLine($"Commiting entry with key {key} and value {value}");
 
             InternalStateMachine[key] = value;
         }
