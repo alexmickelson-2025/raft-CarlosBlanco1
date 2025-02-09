@@ -48,16 +48,18 @@ public class ServerNode : IServerNode
         AddNeighbors(neighbors);
     }
 
-    public void StartTheThing()
+
+    public async Task StartTheThing()
     {
         StartNewElectionTimer();
+        Logs = await LogManager.LoadLogsAsync(NodeId);
     }
 
     public void StartNewElectionTimer(double electionTimeout = 0)
     {
         ElectionTimer?.Stop();
         Random rand = new();
-        double randomValueFrom150To300 = rand.Next(150, 300);
+        double randomValueFrom150To300 = rand.Next((int)timeoutForTimer * 150, (int)timeoutForTimer * 300);
 
         if (ElectionTimer == null)
         {
@@ -197,7 +199,7 @@ public class ServerNode : IServerNode
 
         }
     }
-    public void CommitEntry(int newCommitIndex)
+    public async Task CommitEntry(int newCommitIndex)
     {
         if (newCommitIndex < 0) return;
 
@@ -214,6 +216,9 @@ public class ServerNode : IServerNode
 
             InternalStateMachine[key] = value;
         }
+
+        await LogManager.SaveLogsAsync(NodeId, Logs);
+
 
         if (LeaderNodeId == NodeId) SendConfirmationResponseToClient();
     }
@@ -419,4 +424,6 @@ public class ServerNode : IServerNode
     {
         wasResponseToClientSent = true;
     }
+
+    
 }

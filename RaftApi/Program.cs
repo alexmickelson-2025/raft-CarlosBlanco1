@@ -17,6 +17,7 @@ List<IServerNode> otherNodes = otherNodesRaw
   .ToList<IServerNode>();
 
 var node = new ServerNode([], nodeId: (long)int.Parse(nodeId));
+node.timeoutForTimer = 4;
 // ServerNode.NodeIntervalScalar = double.Parse(nodeIntervalScalarRaw);
 
 node.AddNeighbors(otherNodes);
